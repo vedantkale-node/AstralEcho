@@ -1,8 +1,37 @@
 import * as electron from "electron/main";
 const { app, BrowserWindow } = electron;
 import path from "node:path";
-import { dialog, ipcMain, screen } from "electron";
+import { dialog, ipcMain } from "electron";
 import fs from "node:fs/promises";
+
+async function scanFolder(folderPath: string): Promise<any[]> {
+  const entries = await fs.readdir(folderPath, {
+    withFileTypes: true,
+  });
+
+  const media: any[] = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(folderPath, entry.name);
+
+    if (entry.isDirectory()) {
+      media.push(...(await scanFolder(fullPath)));
+      continue;
+    }
+
+    const ext = path.extname(entry.name).toLowerCase();
+
+    if (
+      [".mp3", ".wav", ".flac", ".m4a", ".mp4", ".mkv", ".webm"].includes(ext)
+    ) {
+      media.push({
+        name: entry.name,
+        path: fullPath,
+      });
+    }
+  }
+  return media;
+}
 
 ipcMain.handle("pick-folder", async () => {
   const result = await dialog.showOpenDialog({
@@ -17,25 +46,8 @@ ipcMain.handle("pick-folder", async () => {
 });
 
 ipcMain.handle("read-folder", async (_, folderPath: string) => {
-  const files = await fs.readdir(folderPath);
-
-  const mediaFiles = files.filter((file) => {
-    const ext = path.extname(file).toLocaleLowerCase();
-    return [
-      ".mp3",
-      ".wav",
-      ".flac",
-      ".m4a",
-      ".mp4",
-      ".mkv",
-      ".webm",
-      ".opus",
-    ].includes(ext);
-  });
-  return mediaFiles.map((file) => ({
-    name: file,
-    path: path.join(folderPath, file),
-  }));
+  const files = await scanFolder(folderPath);
+  return files;
 });
 
 ipcMain.handle("get-last-folder", async () => {
