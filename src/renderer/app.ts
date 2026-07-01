@@ -76,11 +76,10 @@ async function init() {
       >Nothing Playing</h2>
     </header>
 
-    <!-- Player Area -->
-<div class="flex-1 flex items-center justify-center p-8 min-h-0">
+   <div class="flex-1 flex flex-col items-center justify-center p-8 gap-4 min-h-0">
   <div
     id="player-container"
-    class="relative w-full h-full flex items-center justify-center rounded-xl bg-zinc-900 shadow-2xl shadow-black/60 ring-1 ring-white/5 overflow-hidden"
+    class="relative w-full flex-1 flex items-center justify-center rounded-xl bg-zinc-900 shadow-2xl shadow-black/60 ring-1 ring-white/5 overflow-hidden min-h-0"
   >
 
 
@@ -115,10 +114,12 @@ async function init() {
     class="hidden absolute inset-0 h-full w-full object-contain z-10"
   ></video>
 
+  </div>
+
   <!-- Bottom Controls -->
   <div
     id="player-controls"
-    class="hidden absolute bottom-0 left-0 right-0 z-20 border-t border-white/10 bg-zinc-950/90 backdrop-blur-xl px-6 py-4"
+    class="hidden w-full shrink-0 rounded-xl border border-white/5 bg-zinc-900 px-6 py-4"
   >
 
     <div class="flex flex-col items-center gap-4">
@@ -159,11 +160,11 @@ async function init() {
 
 </div>
 
-<div class="flex items-center gap-3 w-full">
+<div class="flex items-center gap-3 w-full group">
 
   <span
     id="current-time"
-    class="w-10 text-right text-xs text-zinc-400"
+    class="w-10 text-right text-xs text-zinc-400 tabular-nums"
   >
     0:00
   </span>
@@ -174,12 +175,12 @@ async function init() {
     min="0"
     max="100"
     value="0"
-    class="flex-1 accent-violet-500"
+    class="flex-1 h-1 rounded-full accent-violet-600 cursor-pointer [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5"
   />
 
   <span
     id="duration"
-    class="w-10 text-xs text-zinc-400"
+    class="w-10 text-xs text-zinc-400 tabular-nums"
   >
     0:00
   </span>
@@ -246,6 +247,39 @@ async function init() {
     progress.addEventListener("input", () => {
       player.currentTime = Number(progress.value);
     });
+
+    let currentPlaylist: any[] = [];
+    let currentIndex = -1;
+    let isShuffle = false;
+    let isRepeat = false;
+
+    const shuffleBtn = document.getElementById("shuffle")!;
+    const repeatBtn = document.getElementById("repeat")!;
+    const previousBtn = document.getElementById("previous")!;
+    const nextBtn = document.getElementById("next")!;
+
+    nextBtn.addEventListener("click", () => playNext());
+    previousBtn.addEventListener("click", () => playPrevious());
+
+    shuffleBtn.addEventListener("click", () => {
+      isShuffle = !isShuffle;
+      shuffleBtn.classList.toggle("text-violet-500", isShuffle);
+    });
+
+    repeatBtn.addEventListener("click", () => {
+      isRepeat = !isRepeat;
+      repeatBtn.classList.toggle("text-violet-500", isRepeat);
+    });
+
+    player.addEventListener("ended", () => {
+      if (isRepeat) {
+        player.currentTime = 0;
+        player.play();
+        return;
+      }
+      playNext();
+    });
+
     let allFiles: any[] = [];
 
     function formatFileName(fileName: string) {
@@ -290,10 +324,98 @@ async function init() {
       });
     }
 
+    async function playFile(
+      file: any,
+      list: any[],
+      index: number,
+      isVideo: boolean,
+    ) {
+      currentPlaylist = list;
+      currentIndex = index;
+
+      document.getElementById("now-playing")!.textContent = formatFileName(
+        file.name,
+      );
+
+      const placeholder = document.getElementById("placeholder")!;
+      const backgroundCover = document.getElementById(
+        "background-cover",
+      ) as HTMLImageElement;
+      const controls = document.getElementById("player-controls")!;
+
+      controls.classList.remove("hidden");
+      player.src = file.path;
+      placeholder.classList.add("hidden");
+
+      if (isVideo) {
+        player.classList.remove("hidden");
+        backgroundCover.classList.add("hidden");
+      } else {
+        player.classList.add("hidden");
+        backgroundCover.classList.remove("hidden");
+
+        let cover = file.thumbnail;
+        if (!cover) {
+          cover = await window.api.getThumbnail(file);
+          file.thumbnail = cover;
+        }
+        const bg = cover ?? "../.././public/assets/music-placeholder.png";
+
+        backgroundCover.style.opacity = "0";
+        setTimeout(() => {
+          backgroundCover.src = bg;
+          backgroundCover.style.opacity = "1";
+        }, 150);
+      }
+
+      await player.play();
+    }
+
+    function playNext() {
+      if (currentPlaylist.length === 0) return;
+
+      let nextIndex: number;
+      if (isShuffle) {
+        if (currentPlaylist.length === 1) {
+          nextIndex = 0;
+        } else {
+          do {
+            nextIndex = Math.floor(Math.random() * currentPlaylist.length);
+          } while (nextIndex === currentIndex);
+        }
+      } else {
+        nextIndex = currentIndex + 1;
+        if (nextIndex >= currentPlaylist.length) {
+          if (!isRepeat) return;
+          nextIndex = 0;
+        }
+      }
+
+      const file = currentPlaylist[nextIndex];
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
+      playFile(file, currentPlaylist, nextIndex, isVideo);
+    }
+
+    function playPrevious() {
+      if (currentPlaylist.length === 0) return;
+
+      let prevIndex = currentIndex - 1;
+      if (prevIndex < 0) {
+        prevIndex = currentPlaylist.length - 1;
+      }
+
+      const file = currentPlaylist[prevIndex];
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
+      playFile(file, currentPlaylist, prevIndex, isVideo);
+    }
+
     async function renderFiles(files: any[], fileList: HTMLElement) {
       fileList.innerHTML = "";
 
-      for (const file of files) {
+      for (let index = 0; index < files.length; index++) {
+        const file = files[index];
         const item = document.createElement("li");
         const ext = file.name.split(".").pop()?.toLowerCase();
         const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
@@ -354,50 +476,8 @@ async function init() {
         item.title = file.name;
         item.className =
           "cursor-pointer rounded-xl p-2 hover:bg-zinc-800 transition-colors";
-        item.addEventListener("click", async () => {
-          document.getElementById("now-playing")!.textContent = formatFileName(
-            file.name,
-          );
-
-          const placeholder = document.getElementById("placeholder")!;
-          const backgroundCover = document.getElementById(
-            "background-cover",
-          ) as HTMLImageElement;
-
-          const controls = document.getElementById("player-controls")!;
-
-          controls.classList.remove("hidden");
-
-          player.src = file.path;
-
-          placeholder.classList.add("hidden");
-
-          if (isVideo) {
-            player.classList.remove("hidden");
-
-            backgroundCover.classList.add("hidden");
-          } else {
-            player.classList.add("hidden");
-
-            backgroundCover.classList.remove("hidden");
-
-            let cover = file.thumbnail;
-
-            if (!cover) {
-              cover = await window.api.getThumbnail(file);
-              file.thumbnail = cover;
-            }
-            const bg = cover ?? "../.././public/assets/music-placeholder.png";
-
-            backgroundCover.style.opacity = "0";
-
-            setTimeout(() => {
-              backgroundCover.src = bg;
-              backgroundCover.style.opacity = "0.3";
-            }, 150);
-          }
-
-          await player.play();
+        item.addEventListener("click", () => {
+          playFile(file, files, index, isVideo);
         });
 
         fileList.appendChild(item);
