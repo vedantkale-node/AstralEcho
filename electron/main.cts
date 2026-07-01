@@ -134,6 +134,7 @@ const createWindow = () => {
     width: 1235,
     height: 700,
   });
+  win.webContents.openDevTools();
   Menu.setApplicationMenu(null);
   win.loadFile(path.join(process.cwd(), "src", "renderer", "index.html"));
 };
