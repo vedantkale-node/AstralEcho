@@ -76,7 +76,7 @@ async function init() {
       >Nothing Playing</h2>
     </header>
 
-   <div class="flex-1 flex flex-col items-center justify-center p-8 gap-4 min-h-0">
+   <div id="player-wrapper" class="flex-1 flex flex-col items-center justify-center p-8 gap-4 min-h-0 bg-zinc-950">
   <div
     id="player-container"
     class="relative w-full flex-1 flex items-center justify-center rounded-xl bg-zinc-900 shadow-2xl shadow-black/60 ring-1 ring-white/5 overflow-hidden min-h-0"
@@ -129,36 +129,83 @@ async function init() {
 
 
   <!-- Center -->
-  <div class="w-full max-w-4xl">
+  <div class="w-full max-w-4xl ">
 
 
 
-    <div class="flex justify-center gap-5 mb-4">
+  <div class="flex items-center justify-between mb-4 px-1">
 
-  <button id="shuffle">
-    <span class="material-symbols-rounded">shuffle</span>
-  </button>
+  <!-- Volume - far left -->
+  <div class="flex items-center gap-2 group/volume w-32">
+    <button
+      id="mute-toggle"
+      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
+    >
+      <span class="material-symbols-rounded text-[20px]">volume_up</span>
+    </button>
 
-  <button id="previous">
-    <span class="material-symbols-rounded">skip_previous</span>
-  </button>
+    <input
+      id="volume"
+      type="range"
+      min="0"
+      max="100"
+      value="100"
+      class="w-0 group-hover/volume:w-20 opacity-0 group-hover/volume:opacity-100 transition-all duration-200 h-1 rounded-full accent-violet-600 cursor-pointer [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3"
+    />
+  </div>
 
-  <button
-    id="play-pause"
-    class="flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 hover:bg-violet-500 active:scale-95 transition-all shadow-xl shadow-violet-900/40"
-  >
-    <span class="material-symbols-rounded">play_arrow</span>
-  </button>
+  <!-- Transport controls - centered -->
+  <div class="flex items-center gap-3">
 
-  <button id="next">
-    <span class="material-symbols-rounded">skip_next</span>
-  </button>
+    <button
+      id="shuffle"
+      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
+    >
+      <span class="material-symbols-rounded text-[20px]">shuffle</span>
+    </button>
 
-  <button id="repeat">
-    <span class="material-symbols-rounded">repeat</span>
-  </button>
+    <button
+      id="previous"
+      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
+    >
+      <span class="material-symbols-rounded text-[22px]">skip_previous</span>
+    </button>
+
+    <button
+      id="play-pause"
+      class="flex h-14 w-14 items-center justify-center rounded-full bg-violet-600 hover:bg-violet-500 active:scale-90 active:bg-violet-700 transition-all duration-150 shadow-xl shadow-violet-900/40"
+    >
+      <span class="material-symbols-rounded text-[28px]">play_arrow</span>
+    </button>
+
+    <button
+      id="next"
+      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
+    >
+      <span class="material-symbols-rounded text-[22px]">skip_next</span>
+    </button>
+
+    <button
+      id="repeat"
+      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
+    >
+      <span class="material-symbols-rounded text-[20px]">repeat</span>
+    </button>
+
+  </div>
+
+  <!-- Fullscreen - far right -->
+  <div class="flex items-center justify-end w-32">
+    <button
+      id="fullscreen"
+      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
+    >
+      <span class="material-symbols-rounded text-[20px]">fullscreen</span>
+    </button>
+  </div>
 
 </div>
+
 
 <div class="flex items-center gap-3 w-full group">
 
@@ -239,6 +286,46 @@ async function init() {
       durationEl.textContent = formatTime(player.duration);
     });
 
+    const volumeSlider = document.getElementById("volume") as HTMLInputElement;
+    const muteToggleBtn = document.getElementById("mute-toggle")!;
+
+    let lastVolume = 1;
+
+    function updateVolumeIcon() {
+      const icon = muteToggleBtn.querySelector("span")!;
+      if (player.muted || player.volume === 0) {
+        icon.textContent = "volume_off";
+      } else if (player.volume < 0.5) {
+        icon.textContent = "volume_down";
+      } else {
+        icon.textContent = "volume_up";
+      }
+    }
+
+    volumeSlider.addEventListener("input", () => {
+      const value = Number(volumeSlider.value) / 100;
+      player.volume = value;
+      player.muted = value === 0;
+      if (value > 0) lastVolume = value;
+      updateVolumeIcon();
+    });
+
+    muteToggleBtn.addEventListener("click", () => {
+      if (player.muted || player.volume === 0) {
+        player.muted = false;
+        player.volume = lastVolume || 1;
+        volumeSlider.value = String(player.volume * 100);
+      } else {
+        lastVolume = player.volume;
+        player.muted = true;
+        player.volume = 0;
+        volumeSlider.value = "0";
+      }
+      updateVolumeIcon();
+    });
+
+    updateVolumeIcon();
+
     player.addEventListener("timeupdate", () => {
       progress.value = String(player.currentTime);
       currentTimeEl.textContent = formatTime(player.currentTime);
@@ -264,12 +351,39 @@ async function init() {
     shuffleBtn.addEventListener("click", () => {
       isShuffle = !isShuffle;
       shuffleBtn.classList.toggle("text-violet-500", isShuffle);
+      shuffleBtn.classList.toggle("text-zinc-300", !isShuffle);
     });
 
     repeatBtn.addEventListener("click", () => {
       isRepeat = !isRepeat;
       repeatBtn.classList.toggle("text-violet-500", isRepeat);
+      repeatBtn.classList.toggle("text-zinc-300", !isRepeat);
     });
+
+    const playerWrapper = document.getElementById("player-wrapper")!;
+    const fullscreenBtn = document.getElementById("fullscreen")!;
+
+    fullscreenBtn.addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        playerWrapper.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      const icon = fullscreenBtn.querySelector("span")!;
+      icon.textContent = document.fullscreenElement
+        ? "fullscreen_exit"
+        : "fullscreen";
+    });
+
+    // Double-click the video/cover area to toggle fullscreen, YouTube-style
+    document
+      .getElementById("player-container")!
+      .addEventListener("dblclick", () => {
+        fullscreenBtn.click();
+      });
 
     player.addEventListener("ended", () => {
       if (isRepeat) {
@@ -445,17 +559,6 @@ async function init() {
         } else if (!isVideo) {
           thumbnail.src = "../.././public/assets/music-placeholder.png";
         }
-        //Video
-        // if (isVideo) {
-        //   thumbnail.src = "../.././public/assets/video-placeholder.png";
-
-        //   generateThumbnail(file.path).then((thumbnailData) => {
-        //     if (thumbnailData) {
-        //       thumbnail.src = thumbnailData;
-        //       file.thumbnail = thumbnailData;
-        //     }
-        //   });
-        // }
 
         if (isVideo) {
           file.thumbnail ??= await generateThumbnail(file.path);
