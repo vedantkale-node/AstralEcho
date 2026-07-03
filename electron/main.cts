@@ -56,7 +56,16 @@ ipcMain.handle("pick-folder", async () => {
   return result.filePaths[0];
 });
 
-ipcMain.handle("read-folder", async (_, folderPath: string) => {
+ipcMain.handle("read-folder", async (_, folderPath: unknown) => {
+  if (typeof folderPath !== "string" || folderPath.trim() === "") {
+    throw new Error("Invalid folder path");
+  }
+
+  const stat = await fs.stat(folderPath).catch(() => null);
+  if (!stat || !stat.isDirectory()) {
+    throw new Error("Folder does not exist or is not a directory");
+  }
+
   const files = await scanFolder(folderPath);
   return files;
 });
@@ -84,7 +93,8 @@ ipcMain.handle("get-last-folder", async () => {
   return settings.lastFolder ?? null;
 });
 
-ipcMain.handle("save-last-folder", async (_, folder: string) => {
+ipcMain.handle("save-last-folder", async (_, folder: unknown) => {
+  if (typeof folder !== "string" || folder.trim() === "") return;
   await writeSettings({ lastFolder: folder });
 });
 
@@ -93,7 +103,8 @@ ipcMain.handle("get-last-played", async () => {
   return settings.lastPlayedPath ?? null;
 });
 
-ipcMain.handle("save-last-played", async (_, filePath: string) => {
+ipcMain.handle("save-last-played", async (_, filePath: unknown) => {
+  if (typeof filePath !== "string" || filePath.trim() === "") return;
   await writeSettings({ lastPlayedPath: filePath });
 });
 
@@ -102,7 +113,14 @@ ipcMain.handle("get-volume", async () => {
   return typeof settings.volume === "number" ? settings.volume : 1;
 });
 
-ipcMain.handle("save-volume", async (_, volume: number) => {
+ipcMain.handle("save-volume", async (_, volume: unknown) => {
+  if (
+    typeof volume !== "number" ||
+    !isFinite(volume) ||
+    volume < 0 ||
+    volume > 1
+  )
+    return;
   await writeSettings({ volume });
 });
 
@@ -129,11 +147,31 @@ ipcMain.handle("get-sidebar-width", async () => {
   return settings.sidebarWidth ?? 400;
 });
 
-ipcMain.handle("save-sidebar-width", async (_, width: number) => {
+ipcMain.handle("save-sidebar-width", async (_, width: unknown) => {
+  if (typeof width !== "number" || !isFinite(width) || width < 0) return;
   await writeSettings({ sidebarWidth: width });
 });
 
+ipcMain.handle("get-window-bounds", async () => {
+  const settings = await readSettings();
+  return settings.windowBounds ?? null;
+});
+
+ipcMain.handle(
+  "save-window-bounds",
+  async (
+    _,
+    bounds: { x: number; y: number; width: number; height: number },
+  ) => {
+    await writeSettings({ windowBounds: bounds });
+  },
+);
+
 ipcMain.handle("get-thumbnail", async (_, file: any) => {
+  if (!file || typeof file.path !== "string" || file.path.trim() === "") {
+    return null;
+  }
+
   const ext = path.extname(file.path).toLowerCase();
 
   // Video
@@ -163,22 +201,55 @@ ipcMain.handle("get-thumbnail", async (_, file: any) => {
   return null;
 });
 
-const createWindow = () => {
+const createWindow = async () => {
+  const settings = await readSettings();
+  const savedBounds = settings.windowBounds;
+
   const win = new BrowserWindow({
     icon: path.join(process.cwd(), "public", "assets", "icon.ico"),
+    width: savedBounds?.width ?? 1235,
+    height: savedBounds?.height ?? 700,
+    x: savedBounds?.x,
+    y: savedBounds?.y,
     webPreferences: {
       preload: path.join(process.cwd(), "dist", "electron", "preload.cjs"),
     },
   });
-  win.setBounds({
-    x: -1540,
-    y: 0,
-    width: 1235,
-    height: 700,
-  });
-  win.webContents.openDevTools();
+
   Menu.setApplicationMenu(null);
   win.loadFile(path.join(process.cwd(), "src", "renderer", "index.html"));
+
+  if (settings.windowMaximized) {
+    win.maximize();
+  }
+
+  let saveBoundsTimeout: ReturnType<typeof setTimeout> | null = null;
+  const persistBounds = () => {
+    if (win.isMaximized()) return; // don't overwrite good bounds while maximized
+    clearTimeout(saveBoundsTimeout!);
+    saveBoundsTimeout = setTimeout(() => {
+      writeSettings({ windowBounds: win.getBounds() });
+    }, 500);
+  };
+
+  win.on("resize", persistBounds);
+  win.on("move", persistBounds);
+  win.on("maximize", () => writeSettings({ windowMaximized: true }));
+  win.on("unmaximize", () => writeSettings({ windowMaximized: false }));
+
+  return win;
 };
 
 app.whenReady().then(createWindow);
+
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
+});
+
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+});
