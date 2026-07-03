@@ -90,11 +90,24 @@ async function init() {
 
   <div class="absolute inset-0 bg-black/50"></div>
 
-<!-- Placeholder -->
+  <!-- Placeholder -->
   <div
     id="placeholder"
-    class="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 z-10"
-  ></div>
+    class="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 z-10 gap-4 px-8 text-center"
+  >
+    <span class="material-symbols-rounded text-6xl text-violet-500">library_music</span>
+    <div>
+      <h2 class="text-lg font-semibold text-white mb-1">No music library yet</h2>
+      <p class="text-sm text-zinc-500">Open a folder to start building your library.</p>
+    </div>
+    <button
+      id="placeholder-open-folder"
+      class="flex items-center gap-2 rounded-lg bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white text-sm font-medium px-5 py-2.5 transition-colors duration-150"
+    >
+      <span class="material-symbols-rounded text-[18px]">folder_open</span>
+      Open Folder
+    </button>
+  </div>
 
   <!-- Session Restore Loading -->
   <div
@@ -1138,6 +1151,11 @@ async function init() {
         allFiles = [];
       }
     });
+    document
+      .getElementById("placeholder-open-folder")
+      ?.addEventListener("click", () => {
+        button?.click();
+      });
   }
 }
 
