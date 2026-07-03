@@ -105,11 +105,27 @@ async function init() {
   <!-- Volume Indicator -->
   <div
     id="volume-indicator"
-        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center gap-2 rounded-full bg-black/70 backdrop-blur-md px-4 py-2 opacity-0 pointer-events-none transition-opacity duration-200"
-
+    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center gap-2 rounded-full bg-black/70 backdrop-blur-md px-4 py-2 opacity-0 pointer-events-none transition-opacity duration-200"
   >
     <span id="volume-indicator-icon" class="material-symbols-rounded text-white text-[20px]">volume_up</span>
     <span id="volume-indicator-value" class="text-white text-sm font-medium tabular-nums w-9">100%</span>
+  </div>
+
+  <!-- Seek Indicator -->
+  <div
+    id="seek-indicator"
+    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center gap-2 rounded-full bg-black/70 backdrop-blur-md px-4 py-2 opacity-0 pointer-events-none transition-opacity duration-200"
+  >
+    <span id="seek-indicator-icon" class="material-symbols-rounded text-white text-[20px]">fast_forward</span>
+    <span id="seek-indicator-value" class="text-white text-sm font-medium tabular-nums">+5s</span>
+  </div>
+
+  <!-- Play/Pause Indicator -->
+  <div
+    id="playpause-indicator"
+    class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex h-16 w-16 items-center justify-center rounded-full bg-black/70 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-200"
+  >
+    <span id="playpause-indicator-icon" class="material-symbols-rounded text-white text-[32px]">play_arrow</span>
   </div>
 
   </div>
@@ -275,9 +291,11 @@ async function init() {
 
     player.addEventListener("play", () => {
       playPauseBtn.querySelector("span")!.textContent = "pause";
+      flashPlayPauseIndicator(false);
     });
     player.addEventListener("pause", () => {
       playPauseBtn.querySelector("span")!.textContent = "play_arrow";
+      flashPlayPauseIndicator(true);
     });
 
     player.addEventListener("loadedmetadata", () => {
@@ -328,6 +346,39 @@ async function init() {
     });
 
     updateVolumeIcon();
+
+    const playPauseIndicator = document.getElementById("playpause-indicator")!;
+    const playPauseIndicatorIcon = document.getElementById(
+      "playpause-indicator-icon",
+    )!;
+    let playPauseIndicatorTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    function flashPlayPauseIndicator(isPlaying: boolean) {
+      playPauseIndicatorIcon.textContent = isPlaying ? "play_arrow" : "pause";
+
+      playPauseIndicator.classList.remove("opacity-0");
+      clearTimeout(playPauseIndicatorTimeout!);
+      playPauseIndicatorTimeout = setTimeout(() => {
+        playPauseIndicator.classList.add("opacity-0");
+      }, 500);
+    }
+
+    const seekIndicator = document.getElementById("seek-indicator")!;
+    const seekIndicatorIcon = document.getElementById("seek-indicator-icon")!;
+    const seekIndicatorValue = document.getElementById("seek-indicator-value")!;
+    let seekIndicatorTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    function flashSeekIndicator(deltaSeconds: number) {
+      seekIndicatorIcon.textContent =
+        deltaSeconds > 0 ? "fast_forward" : "fast_rewind";
+      seekIndicatorValue.textContent = `${deltaSeconds > 0 ? "+" : ""}${deltaSeconds}s`;
+
+      seekIndicator.classList.remove("opacity-0");
+      clearTimeout(seekIndicatorTimeout!);
+      seekIndicatorTimeout = setTimeout(() => {
+        seekIndicator.classList.add("opacity-0");
+      }, 700);
+    }
 
     const volumeIndicator = document.getElementById("volume-indicator")!;
     const volumeIndicatorIcon = document.getElementById(
@@ -386,6 +437,17 @@ async function init() {
     let currentIndex = -1;
     let isShuffle = false;
     let isRepeat = false;
+    let currentPlayingPath: string | null = null;
+
+    function updateActiveListItem() {
+      const items = fileList.querySelectorAll<HTMLLIElement>("li[data-path]");
+      items.forEach((item) => {
+        const isActive = item.dataset.path === currentPlayingPath;
+        item.classList.toggle("bg-violet-500/15", isActive);
+        item.classList.toggle("ring-1", isActive);
+        item.classList.toggle("ring-violet-500/30", isActive);
+      });
+    }
 
     const shuffleBtn = document.getElementById("shuffle")!;
     const repeatBtn = document.getElementById("repeat")!;
@@ -399,13 +461,26 @@ async function init() {
       isShuffle = !isShuffle;
       shuffleBtn.classList.toggle("text-violet-500", isShuffle);
       shuffleBtn.classList.toggle("text-zinc-300", !isShuffle);
+      window.api.saveShuffle(isShuffle);
     });
 
     repeatBtn.addEventListener("click", () => {
       isRepeat = !isRepeat;
       repeatBtn.classList.toggle("text-violet-500", isRepeat);
       repeatBtn.classList.toggle("text-zinc-300", !isRepeat);
+      window.api.saveRepeat(isRepeat);
     });
+
+    Promise.all([window.api.getShuffle(), window.api.getRepeat()]).then(
+      ([savedShuffle, savedRepeat]) => {
+        isShuffle = savedShuffle;
+        isRepeat = savedRepeat;
+        shuffleBtn.classList.toggle("text-violet-500", isShuffle);
+        shuffleBtn.classList.toggle("text-zinc-300", !isShuffle);
+        repeatBtn.classList.toggle("text-violet-500", isRepeat);
+        repeatBtn.classList.toggle("text-zinc-300", !isRepeat);
+      },
+    );
 
     const playerWrapper = document.getElementById("player-wrapper")!;
     const fullscreenBtn = document.getElementById("fullscreen")!;
@@ -455,10 +530,32 @@ async function init() {
       playerControls.classList.toggle("pt-16", isFs);
     });
 
-    // Double-click the video/cover area to toggle fullscreen, YouTube-style
+    // Single click toggles play/pause, double click toggles fullscreen (YouTube-style)
+    let playerClickTimer: ReturnType<typeof setTimeout> | null = null;
+
+    document
+      .getElementById("player-container")!
+      .addEventListener("click", (e) => {
+        if (
+          e.target === volumeIndicator ||
+          volumeIndicator.contains(e.target as Node)
+        )
+          return;
+
+        if (playerClickTimer) return;
+        playerClickTimer = setTimeout(() => {
+          playPauseBtn.click();
+          playerClickTimer = null;
+        }, 220);
+      });
+
     document
       .getElementById("player-container")!
       .addEventListener("dblclick", () => {
+        if (playerClickTimer) {
+          clearTimeout(playerClickTimer);
+          playerClickTimer = null;
+        }
         fullscreenBtn.click();
       });
 
@@ -521,11 +618,13 @@ async function init() {
             player.currentTime + 5,
             player.duration || 0,
           );
+          flashSeekIndicator(5);
           break;
 
         case "ArrowLeft":
           e.preventDefault();
           player.currentTime = Math.max(player.currentTime - 5, 0);
+          flashSeekIndicator(-5);
           break;
 
         case "ArrowUp":
@@ -629,6 +728,8 @@ async function init() {
     ) {
       currentPlaylist = list;
       currentIndex = index;
+      currentPlayingPath = file.path;
+      updateActiveListItem();
 
       window.api.saveLastPlayed(file.path);
 
@@ -722,11 +823,13 @@ async function init() {
         const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
         item.innerHTML = `
   <div class="flex items-center gap-3">
-    <img
-  src=""
-  alt="Thumbnail"
-  class="w-28 h-16 rounded object-cover shrink-0"
-/>
+    <div class="w-28 aspect-video rounded overflow-hidden shrink-0 bg-zinc-800">
+      <img
+        src=""
+        alt="Thumbnail"
+        class="w-full h-full object-contain"
+      />
+    </div>
 
     <div class="min-w-0 flex-1">
   <p class="truncate text-sm font-medium text-white">
@@ -764,8 +867,12 @@ async function init() {
           }
         }
         item.title = file.name;
+        item.dataset.path = file.path;
         item.className =
-          "cursor-pointer rounded-xl p-2 hover:bg-zinc-800 transition-colors";
+          "cursor-pointer rounded-xl p-2 hover:bg-zinc-800 transition-colors" +
+          (file.path === currentPlayingPath
+            ? " bg-violet-500/15 ring-1 ring-violet-500/30"
+            : "");
         item.addEventListener("click", () => {
           playFile(file, files, index, isVideo);
         });
@@ -775,6 +882,10 @@ async function init() {
     }
 
     let isResizing = false;
+
+    window.api.getSidebarWidth().then((savedWidth) => {
+      sidebar.style.width = `${savedWidth}px`;
+    });
 
     resizeHandle.addEventListener("mousedown", () => {
       isResizing = true;
@@ -791,6 +902,9 @@ async function init() {
     });
 
     document.addEventListener("mouseup", () => {
+      if (isResizing) {
+        window.api.saveSidebarWidth(sidebar.offsetWidth);
+      }
       isResizing = false;
     });
 
@@ -819,6 +933,8 @@ async function init() {
 
           currentPlaylist = allFiles;
           currentIndex = lastIndex;
+          currentPlayingPath = file.path;
+          updateActiveListItem();
 
           document.getElementById("now-playing")!.textContent = formatFileName(
             file.name,

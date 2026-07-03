@@ -14,4 +14,12 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.invoke("save-last-played", filePath),
   getVolume: () => ipcRenderer.invoke("get-volume"),
   saveVolume: (volume: number) => ipcRenderer.invoke("save-volume", volume),
+  getShuffle: () => ipcRenderer.invoke("get-shuffle"),
+  saveShuffle: (shuffle: boolean) =>
+    ipcRenderer.invoke("save-shuffle", shuffle),
+  getRepeat: () => ipcRenderer.invoke("get-repeat"),
+  saveRepeat: (repeat: boolean) => ipcRenderer.invoke("save-repeat", repeat),
+  getSidebarWidth: () => ipcRenderer.invoke("get-sidebar-width"),
+  saveSidebarWidth: (width: number) =>
+    ipcRenderer.invoke("save-sidebar-width", width),
 });

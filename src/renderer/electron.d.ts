@@ -19,6 +19,12 @@ declare global {
       saveLastPlayed: (filePath: string) => Promise<void>;
       getVolume: () => Promise<number>;
       saveVolume: (volume: number) => Promise<void>;
+      getShuffle: () => Promise<boolean>;
+      saveShuffle: (shuffle: boolean) => Promise<void>;
+      getRepeat: () => Promise<boolean>;
+      saveRepeat: (repeat: boolean) => Promise<void>;
+      getSidebarWidth: () => Promise<number>;
+      saveSidebarWidth: (width: number) => Promise<void>;
     };
   }
 }

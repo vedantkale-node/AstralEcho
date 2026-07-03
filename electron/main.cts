@@ -61,12 +61,7 @@ ipcMain.handle("read-folder", async (_, folderPath: string) => {
   return files;
 });
 
-const settingsPath = path.join(
-  process.cwd(),
-  "electron",
-  "storage",
-  "settings.json",
-);
+const settingsPath = path.join(app.getPath("userData"), "settings.json");
 
 async function readSettings(): Promise<Record<string, any>> {
   try {
@@ -78,6 +73,7 @@ async function readSettings(): Promise<Record<string, any>> {
 }
 
 async function writeSettings(patch: Record<string, any>) {
+  await fs.mkdir(path.dirname(settingsPath), { recursive: true });
   const current = await readSettings();
   const updated = { ...current, ...patch };
   await fs.writeFile(settingsPath, JSON.stringify(updated, null, 2));
@@ -108,6 +104,33 @@ ipcMain.handle("get-volume", async () => {
 
 ipcMain.handle("save-volume", async (_, volume: number) => {
   await writeSettings({ volume });
+});
+
+ipcMain.handle("get-shuffle", async () => {
+  const settings = await readSettings();
+  return settings.shuffle ?? false;
+});
+
+ipcMain.handle("save-shuffle", async (_, shuffle: boolean) => {
+  await writeSettings({ shuffle });
+});
+
+ipcMain.handle("get-repeat", async () => {
+  const settings = await readSettings();
+  return settings.repeat ?? false;
+});
+
+ipcMain.handle("save-repeat", async (_, repeat: boolean) => {
+  await writeSettings({ repeat });
+});
+
+ipcMain.handle("get-sidebar-width", async () => {
+  const settings = await readSettings();
+  return settings.sidebarWidth ?? 400;
+});
+
+ipcMain.handle("save-sidebar-width", async (_, width: number) => {
+  await writeSettings({ sidebarWidth: width });
 });
 
 ipcMain.handle("get-thumbnail", async (_, file: any) => {
