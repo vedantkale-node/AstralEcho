@@ -90,11 +90,20 @@ async function init() {
 
   <div class="absolute inset-0 bg-black/50"></div>
 
-  <!-- Placeholder -->
+<!-- Placeholder -->
   <div
     id="placeholder"
     class="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 z-10"
   ></div>
+
+  <!-- Session Restore Loading -->
+  <div
+    id="restore-loading"
+    class="hidden absolute inset-0 flex flex-col items-center justify-center gap-3 text-zinc-500 z-20 bg-zinc-900"
+  >
+    <span class="material-symbols-rounded text-4xl animate-spin text-violet-500">progress_activity</span>
+    <p class="text-sm">Restoring your session...</p>
+  </div>
 
   <!-- Video -->
   <video
@@ -1009,8 +1018,11 @@ async function init() {
         allFiles = [];
       }
 
+      const restoreLoading = document.getElementById("restore-loading")!;
       const lastPlayedPath = await window.api.getLastPlayed();
       if (lastPlayedPath) {
+        restoreLoading.classList.remove("hidden");
+
         const lastIndex = allFiles.findIndex((f) => f.path === lastPlayedPath);
         if (lastIndex !== -1) {
           const file = allFiles[lastIndex];
@@ -1054,7 +1066,10 @@ async function init() {
               cover ?? "../.././public/assets/music-placeholder.png";
             backgroundCover.style.opacity = "1";
           }
+          // Loaded and ready, but not playing — user must press play.
         }
+
+        restoreLoading.classList.add("hidden");
       }
     }
     button?.addEventListener("click", async () => {
