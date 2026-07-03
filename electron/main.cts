@@ -167,6 +167,17 @@ ipcMain.handle(
   },
 );
 
+ipcMain.handle("get-audio-duration", async (_, file: any) => {
+  if (!file || typeof file.path !== "string") return null;
+
+  try {
+    const metadata = await parseFile(file.path);
+    return metadata.format.duration ?? null;
+  } catch {
+    return null;
+  }
+});
+
 ipcMain.handle("get-thumbnail", async (_, file: any) => {
   if (!file || typeof file.path !== "string" || file.path.trim() === "") {
     return null;

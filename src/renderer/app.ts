@@ -772,13 +772,30 @@ async function init() {
         .trim();
     }
 
-    async function generateThumbnail(videoPath: string): Promise<string> {
+    function formatDuration(seconds: number): string {
+      if (!isFinite(seconds) || seconds < 0) return "";
+      const m = Math.floor(seconds / 60);
+      const s = Math.floor(seconds % 60)
+        .toString()
+        .padStart(2, "0");
+      return `${m}:${s}`;
+    }
+
+    async function generateThumbnail(
+      videoPath: string,
+      onDuration?: (duration: number) => void,
+    ): Promise<string> {
       return new Promise((resolve) => {
         const video = document.createElement("video");
         video.preload = "auto";
         video.muted = true;
         video.src = videoPath;
         video.load();
+
+        video.addEventListener("loadedmetadata", () => {
+          if (onDuration && isFinite(video.duration))
+            onDuration(video.duration);
+        });
 
         video.addEventListener("loadeddata", () => {
           video.currentTime = 2;
@@ -910,12 +927,15 @@ async function init() {
         const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
         item.innerHTML = `
   <div class="flex items-center gap-3">
-    <div class="w-28 aspect-video rounded overflow-hidden shrink-0 bg-zinc-800">
+    <div class="relative w-28 aspect-video rounded overflow-hidden shrink-0 bg-zinc-800">
       <img
         src=""
         alt="Thumbnail"
-        class="w-full h-full object-contain"
+        class="w-full h-full object-cover object-center"
       />
+      <span
+        class="duration-badge hidden absolute bottom-1 right-1 rounded bg-black/80 px-1 text-[10px] font-medium text-white tabular-nums"
+      ></span>
     </div>
 
     <div class="min-w-0 flex-1">
@@ -930,6 +950,21 @@ async function init() {
   </div>
 `;
         const thumbnail = item.querySelector("img") as HTMLImageElement;
+        const durationBadge = item.querySelector(
+          ".duration-badge",
+        ) as HTMLElement;
+
+        function setDurationBadge(seconds: number) {
+          const formatted = formatDuration(seconds);
+          if (!formatted) return;
+          durationBadge.textContent = formatted;
+          durationBadge.classList.remove("hidden");
+          file.duration = seconds;
+        }
+
+        if (typeof file.duration === "number") {
+          setDurationBadge(file.duration);
+        }
 
         if (file.thumbnail) {
           thumbnail.src = file.thumbnail;
@@ -938,7 +973,12 @@ async function init() {
         }
 
         if (isVideo) {
-          file.thumbnail ??= await generateThumbnail(file.path);
+          if (!file.thumbnail || typeof file.duration !== "number") {
+            file.thumbnail = await generateThumbnail(
+              file.path,
+              setDurationBadge,
+            );
+          }
           if (file.thumbnail) thumbnail.src = file.thumbnail;
         }
         // Audio
@@ -950,6 +990,11 @@ async function init() {
                 file.thumbnail = cover;
                 thumbnail.src = cover;
               }
+            });
+          }
+          if (typeof file.duration !== "number") {
+            window.api.getAudioDuration(file).then((duration) => {
+              if (duration) setDurationBadge(duration);
             });
           }
         }
