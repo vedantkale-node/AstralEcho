@@ -167,49 +167,37 @@ ipcMain.handle(
   },
 );
 
-ipcMain.handle("get-audio-duration", async (_, file: any) => {
-  if (!file || typeof file.path !== "string") return null;
-
-  try {
-    const metadata = await parseFile(file.path);
-    return metadata.format.duration ?? null;
-  } catch {
-    return null;
-  }
-});
-
-ipcMain.handle("get-thumbnail", async (_, file: any) => {
+ipcMain.handle("get-audio-metadata", async (_, file: any) => {
   if (!file || typeof file.path !== "string" || file.path.trim() === "") {
-    return null;
+    return { cover: null, duration: null, title: null };
   }
 
   const ext = path.extname(file.path).toLowerCase();
 
-  // Video
-  if ([".mp4", ".mkv", ".webm"].includes(ext)) {
-    return null;
+  if (![".mp3", ".flac", ".m4a", ".wav", ".opus"].includes(ext)) {
+    return { cover: null, duration: null, title: null };
   }
 
-  // Audio
-  if ([".mp3", ".flac", ".m4a", ".wav", ".opus"].includes(ext)) {
-    try {
-      const metadata = await parseFile(file.path);
+  try {
+    const metadata = await parseFile(file.path);
 
-      const picture = metadata.common.picture?.[0];
-
-      if (!picture) return null;
-
+    let cover: string | null = null;
+    const picture = metadata.common.picture?.[0];
+    if (picture) {
       const mimeType = picture.format.startsWith("image/")
         ? picture.format
         : `image/${picture.format}`;
-
-      return `data:${mimeType};base64,${Buffer.from(picture.data).toString("base64")}`;
-    } catch {
-      return null;
+      cover = `data:${mimeType};base64,${Buffer.from(picture.data).toString("base64")}`;
     }
-  }
 
-  return null;
+    return {
+      cover,
+      duration: metadata.format.duration ?? null,
+      title: metadata.common.title ?? null,
+    };
+  } catch {
+    return { cover: null, duration: null, title: null };
+  }
 });
 
 const createWindow = async () => {

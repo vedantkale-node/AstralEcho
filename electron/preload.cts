@@ -8,9 +8,8 @@ contextBridge.exposeInMainWorld("api", {
   getLastFolder: () => ipcRenderer.invoke("get-last-folder"),
   saveLastFolder: (folder: string) =>
     ipcRenderer.invoke("save-last-folder", folder),
-  getThumbnail: (file: any) => ipcRenderer.invoke("get-thumbnail", file),
-  getAudioDuration: (file: any) =>
-    ipcRenderer.invoke("get-audio-duration", file),
+  getAudioMetadata: (file: any) =>
+    ipcRenderer.invoke("get-audio-metadata", file),
   getLastPlayed: () => ipcRenderer.invoke("get-last-played"),
   saveLastPlayed: (filePath: string) =>
     ipcRenderer.invoke("save-last-played", filePath),

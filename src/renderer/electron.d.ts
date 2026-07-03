@@ -14,8 +14,11 @@ declare global {
       readFolder: (folder: string) => Promise<MediaFile[]>;
       getLastFolder: () => Promise<string | null>;
       saveLastFolder: (folder: string) => Promise<void>;
-      getThumbnail(file: any): Promise<string | null>;
-      getAudioDuration(file: any): Promise<number | null>;
+      getAudioMetadata(file: any): Promise<{
+        cover: string | null;
+        duration: number | null;
+        title: string | null;
+      }>;
       getLastPlayed: () => Promise<string | null>;
       saveLastPlayed: (filePath: string) => Promise<void>;
       getVolume: () => Promise<number>;

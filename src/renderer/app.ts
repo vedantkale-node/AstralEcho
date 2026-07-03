@@ -872,13 +872,16 @@ async function init() {
       } else {
         player.classList.add("hidden");
         backgroundCover.classList.remove("hidden");
-
         let cover = file.thumbnail;
         if (!cover) {
-          cover = await window.api.getThumbnail(file);
+          const meta = await window.api.getAudioMetadata(file);
+          cover = meta.cover;
           file.thumbnail = cover;
+          if (meta.duration) file.duration = meta.duration;
+          if (meta.title) file.title = meta.title;
         }
-        const bg = cover ?? "../.././public/assets/music-placeholder.png";
+        backgroundCover.src =
+          cover ?? "../.././public/assets/music-placeholder.png";
 
         backgroundCover.style.opacity = "0";
         setTimeout(() => {
@@ -938,6 +941,8 @@ async function init() {
         const item = document.createElement("li");
         const ext = file.name.split(".").pop()?.toLowerCase();
         const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
+        const displayTitle = file.title ?? formatFileName(file.name);
+
         item.innerHTML = `
   <div class="flex items-center gap-3">
     <div class="relative w-28 aspect-video rounded overflow-hidden shrink-0 bg-zinc-800">
@@ -952,8 +957,8 @@ async function init() {
     </div>
 
     <div class="min-w-0 flex-1">
-  <p class="truncate text-sm font-medium text-white">
-    ${formatFileName(file.name)}
+  <p class="truncate text-sm font-medium text-white item-title">
+    ${displayTitle}
   </p>
 
   <p class="text-xs text-zinc-400">
@@ -998,17 +1003,24 @@ async function init() {
         else {
           if (!file.thumbnail) {
             thumbnail.src = "../.././public/assets/music-placeholder.png";
-            window.api.getThumbnail(file).then((cover) => {
-              if (cover) {
-                file.thumbnail = cover;
-                thumbnail.src = cover;
-              }
-            });
           }
-          if (typeof file.duration !== "number") {
-            window.api.getAudioDuration(file).then((duration) => {
-              if (duration) setDurationBadge(duration);
-            });
+
+          if (!file.metadataFetched) {
+            file.metadataFetched = true;
+            window.api
+              .getAudioMetadata(file)
+              .then(({ cover, duration, title }) => {
+                if (cover) {
+                  file.thumbnail = cover;
+                  thumbnail.src = cover;
+                }
+                if (duration) setDurationBadge(duration);
+                if (title) {
+                  file.title = title;
+                  const titleEl = item.querySelector(".item-title");
+                  if (titleEl) titleEl.textContent = title;
+                }
+              });
           }
         }
         item.title = file.name;
@@ -1029,7 +1041,8 @@ async function init() {
     let isResizing = false;
 
     window.api.getSidebarWidth().then((savedWidth) => {
-      sidebar.style.width = `${savedWidth}px`;
+      const clamped = Math.min(600, Math.max(250, savedWidth));
+      sidebar.style.width = `${clamped}px`;
     });
 
     resizeHandle.addEventListener("mousedown", () => {
@@ -1093,9 +1106,8 @@ async function init() {
           updateActiveListItem();
           setControlsEnabled(true);
 
-          document.getElementById("now-playing")!.textContent = formatFileName(
-            file.name,
-          );
+          document.getElementById("now-playing")!.textContent =
+            file.title ?? formatFileName(file.name);
 
           const placeholder = document.getElementById("placeholder")!;
           const backgroundCover = document.getElementById(
@@ -1117,12 +1129,13 @@ async function init() {
 
             let cover = file.thumbnail;
             if (!cover) {
-              cover = await window.api.getThumbnail(file);
+              const meta = await window.api.getAudioMetadata(file);
+              cover = meta.cover;
               file.thumbnail = cover;
+              if (meta.duration) file.duration = meta.duration;
+              if (meta.title) file.title = meta.title;
             }
-            backgroundCover.src =
-              cover ?? "../.././public/assets/music-placeholder.png";
-            backgroundCover.style.opacity = "1";
+            const bg = cover ?? "../.././public/assets/music-placeholder.png";
           }
           // Loaded and ready, but not playing — user must press play.
         }
