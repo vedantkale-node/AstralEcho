@@ -1,5 +1,6 @@
 {
-  "name": "Astral Echo",
+  "name": "astral-echo",
+  "productName": "Astral Echo",
   "version": "1.0.0",
   "description": "",
   "type": "module",
