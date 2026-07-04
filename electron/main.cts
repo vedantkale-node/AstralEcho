@@ -214,7 +214,7 @@ const createWindow = async () => {
       preload: path.join(process.cwd(), "dist", "electron", "preload.cjs"),
     },
   });
-
+  win.webContents.openDevTools();
   Menu.setApplicationMenu(null);
   win.loadFile(path.join(process.cwd(), "src", "renderer", "index.html"));
 

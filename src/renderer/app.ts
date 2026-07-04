@@ -196,7 +196,7 @@ async function init() {
 
     <button
       id="shuffle"
-      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
+      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:not-[.text-violet-500]:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
     >
       <span class="material-symbols-rounded text-[20px]">shuffle</span>
     </button>
@@ -224,7 +224,7 @@ async function init() {
 
     <button
       id="repeat"
-      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
+      class="flex h-9 w-9 items-center justify-center rounded-full text-zinc-300 hover:not-[.text-violet-500]:text-white hover:bg-white/10 active:scale-90 active:bg-white/20 transition-all duration-150"
     >
       <span class="material-symbols-rounded text-[20px]">repeat</span>
     </button>
@@ -345,10 +345,16 @@ async function init() {
 
     function formatTime(sec: number) {
       if (!isFinite(sec)) return "0:00";
-      const m = Math.floor(sec / 60);
+
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
       const s = Math.floor(sec % 60)
         .toString()
         .padStart(2, "0");
+
+      if (h > 0) {
+        return `${h}:${m.toString().padStart(2, "0")}:${s}`;
+      }
       return `${m}:${s}`;
     }
 
@@ -787,10 +793,16 @@ async function init() {
 
     function formatDuration(seconds: number): string {
       if (!isFinite(seconds) || seconds < 0) return "";
-      const m = Math.floor(seconds / 60);
+
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
       const s = Math.floor(seconds % 60)
         .toString()
         .padStart(2, "0");
+
+      if (h > 0) {
+        return `${h}:${m.toString().padStart(2, "0")}:${s}`;
+      }
       return `${m}:${s}`;
     }
 
@@ -850,9 +862,8 @@ async function init() {
 
       window.api.saveLastPlayed(file.path);
 
-      document.getElementById("now-playing")!.textContent = formatFileName(
-        file.name,
-      );
+      document.getElementById("now-playing")!.textContent =
+        file.title ?? formatFileName(file.name);
 
       const placeholder = document.getElementById("placeholder")!;
       const backgroundCover = document.getElementById(
@@ -880,8 +891,7 @@ async function init() {
           if (meta.duration) file.duration = meta.duration;
           if (meta.title) file.title = meta.title;
         }
-        backgroundCover.src =
-          cover ?? "../.././public/assets/music-placeholder.png";
+        const bg = cover ?? "../.././public/assets/music-placeholder.png";
 
         backgroundCover.style.opacity = "0";
         setTimeout(() => {
@@ -1133,9 +1143,19 @@ async function init() {
               cover = meta.cover;
               file.thumbnail = cover;
               if (meta.duration) file.duration = meta.duration;
-              if (meta.title) file.title = meta.title;
+              if (meta.title) {
+                file.title = meta.title;
+                document.getElementById("now-playing")!.textContent =
+                  meta.title;
+              }
             }
             const bg = cover ?? "../.././public/assets/music-placeholder.png";
+
+            backgroundCover.style.opacity = "0";
+            setTimeout(() => {
+              backgroundCover.src = bg;
+              backgroundCover.style.opacity = "1";
+            }, 150);
           }
           // Loaded and ready, but not playing — user must press play.
         }
