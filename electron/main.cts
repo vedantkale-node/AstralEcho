@@ -4,13 +4,18 @@ import path from "node:path";
 import { dialog, ipcMain, Menu } from "electron";
 import fs from "node:fs/promises";
 import { parseFile } from "music-metadata";
+import {
+  MEDIA_EXTENSIONS,
+  AUDIO_EXTENSIONS,
+  type MediaFile,
+} from "./types/media.js";
 
-async function scanFolder(folderPath: string): Promise<any[]> {
+async function scanFolder(folderPath: string): Promise<MediaFile[]> {
   const entries = await fs.readdir(folderPath, {
     withFileTypes: true,
   });
 
-  const media: any[] = [];
+  const media: MediaFile[] = [];
 
   for (const entry of entries) {
     const fullPath = path.join(folderPath, entry.name);
@@ -22,18 +27,7 @@ async function scanFolder(folderPath: string): Promise<any[]> {
 
     const ext = path.extname(entry.name).toLowerCase();
 
-    if (
-      [
-        ".mp3",
-        ".wav",
-        ".flac",
-        ".m4a",
-        ".mp4",
-        ".mkv",
-        ".webm",
-        ".opus",
-      ].includes(ext)
-    ) {
+    if ((MEDIA_EXTENSIONS as readonly string[]).includes(ext)) {
       media.push({
         name: entry.name,
         path: fullPath,
@@ -156,29 +150,14 @@ ipcMain.handle("save-sidebar-width", async (_, width: unknown) => {
   await writeSettings({ sidebarWidth: width });
 });
 
-ipcMain.handle("get-window-bounds", async () => {
-  const settings = await readSettings();
-  return settings.windowBounds ?? null;
-});
-
-ipcMain.handle(
-  "save-window-bounds",
-  async (
-    _,
-    bounds: { x: number; y: number; width: number; height: number },
-  ) => {
-    await writeSettings({ windowBounds: bounds });
-  },
-);
-
-ipcMain.handle("get-audio-metadata", async (_, file: any) => {
+ipcMain.handle("get-audio-metadata", async (_, file: MediaFile) => {
   if (!file || typeof file.path !== "string" || file.path.trim() === "") {
     return { cover: null, duration: null, title: null };
   }
 
   const ext = path.extname(file.path).toLowerCase();
 
-  if (![".mp3", ".flac", ".m4a", ".wav", ".opus"].includes(ext)) {
+  if (!(AUDIO_EXTENSIONS as readonly string[]).includes(ext)) {
     return { cover: null, duration: null, title: null };
   }
 
@@ -219,7 +198,9 @@ const createWindow = async () => {
     },
   });
 
-  win.webContents.openDevTools();
+  if (!app.isPackaged) {
+    win.webContents.openDevTools();
+  }
   Menu.setApplicationMenu(null);
   win.loadFile(
     path.join(__dirname, "..", "..", "src", "renderer", "index.html"),

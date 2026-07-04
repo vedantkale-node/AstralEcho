@@ -534,7 +534,7 @@ async function init() {
       player.currentTime = Number(progress.value);
     });
 
-    let currentPlaylist: any[] = [];
+    let currentPlaylist: MediaFile[] = [];
     let currentIndex = -1;
     let isShuffle = false;
     let isRepeat = false;
@@ -808,7 +808,7 @@ async function init() {
       }
     });
 
-    let allFiles: any[] = [];
+    let allFiles: MediaFile[] = [];
     let currentFolder: string | null = lastFolder ?? null;
 
     function formatFileName(fileName: string) {
@@ -818,6 +818,13 @@ async function init() {
         .replace(/\(.*?\)/g, "")
         .replace(/[-–—]\s*$/, "")
         .trim();
+    }
+
+    const VIDEO_EXTS = ["mp4", "mkv", "webm"];
+
+    function isVideoFile(fileName: string): boolean {
+      const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
+      return VIDEO_EXTS.includes(ext);
     }
 
     function formatDuration(seconds: number): string {
@@ -906,8 +913,8 @@ async function init() {
     }
 
     async function playFile(
-      file: any,
-      list: any[],
+      file: MediaFile,
+      list: MediaFile[],
       index: number,
       isVideo: boolean,
     ) {
@@ -979,10 +986,8 @@ async function init() {
           nextIndex = 0;
         }
       }
-
       const file = currentPlaylist[nextIndex];
-      const ext = file.name.split(".").pop()?.toLowerCase();
-      const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
+      const isVideo = isVideoFile(file.name);
       playFile(file, currentPlaylist, nextIndex, isVideo);
     }
 
@@ -995,19 +1000,17 @@ async function init() {
       }
 
       const file = currentPlaylist[prevIndex];
-      const ext = file.name.split(".").pop()?.toLowerCase();
-      const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
+      const isVideo = isVideoFile(file.name);
       playFile(file, currentPlaylist, prevIndex, isVideo);
     }
 
-    async function renderFiles(files: any[], fileList: HTMLElement) {
+    async function renderFiles(files: MediaFile[], fileList: HTMLElement) {
       fileList.innerHTML = "";
 
       for (let index = 0; index < files.length; index++) {
         const file = files[index];
         const item = document.createElement("li");
-        const ext = file.name.split(".").pop()?.toLowerCase();
-        const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
+        const isVideo = isVideoFile(file.name);
         const displayTitle = file.title ?? formatFileName(file.name);
 
         item.innerHTML = `
@@ -1154,8 +1157,7 @@ async function init() {
         const lastIndex = allFiles.findIndex((f) => f.path === lastPlayedPath);
         if (lastIndex !== -1) {
           const file = allFiles[lastIndex];
-          const ext = file.name.split(".").pop()?.toLowerCase();
-          const isVideo = ["mp4", "mkv", "webm"].includes(ext ?? "");
+          const isVideo = isVideoFile(file.name);
 
           currentPlaylist = allFiles;
           currentIndex = lastIndex;

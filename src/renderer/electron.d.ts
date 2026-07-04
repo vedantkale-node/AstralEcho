@@ -5,6 +5,9 @@ declare global {
     name: string;
     path: string;
     thumbnail?: string | null;
+    duration?: number;
+    title?: string;
+    metadataFetched?: boolean;
   }
 
   interface Window {
