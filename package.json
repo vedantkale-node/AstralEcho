@@ -2,34 +2,57 @@
   "name": "astral-echo",
   "productName": "AstralEcho",
   "version": "1.0.0",
-  "description": "",
+  "description": "A fast, lightweight desktop media player for local audio and video libraries.",
   "type": "module",
   "main": "dist/electron/main.cjs",
+  "author": {
+    "name": "Vedant Kale",
+    "url": "https://github.com/vedantkale-node"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vedantkale-node/AstralEcho.git"
+  },
+  "homepage": "https://github.com/vedantkale-node/AstralEcho",
+  "bugs": {
+    "url": "https://github.com/vedantkale-node/AstralEcho/issues"
+  },
+  "keywords": [
+    "electron",
+    "media-player",
+    "desktop-app",
+    "music-player",
+    "video-player"
+  ],
   "scripts": {
     "build:main": "tsc -p tsconfig.main.json",
     "build:renderer": "tsc -p tsconfig.renderer.json",
     "watch:main": "tsc -w -p tsconfig.main.json",
     "watch:renderer": "tsc -w -p tsconfig.renderer.json",
     "electron": "nodemon --watch dist --exec node electron/dev-runner.cjs",
-    "dev": "concurrently \"pnpm watch:main\" \"pnpm watch:renderer\" \"pnpm electron\"",
-    "build": "npm run build:main && npm run build:renderer",
+    "dev": "concurrently \"pnpm watch:main\" \"pnpm watch:renderer\" \"pnpm electron\" \"pnpm build:css:watch\"",
+    "build": "pnpm build:main && pnpm build:renderer && pnpm build:css",
+    "build:css": "npx @tailwindcss/cli -i ./src/renderer/css/input.css -o ./src/renderer/css/output.css --minify",
+    "build:css:watch": "npx @tailwindcss/cli -i ./src/renderer/css/input.css -o ./src/renderer/css/output.css --watch",
+    "start": "electron .",
+    "pack": "pnpm build && electron-builder --dir",
+    "dist": "pnpm build && electron-builder",
+    "dist:win": "pnpm build && electron-builder --win",
+    "dist:linux": "pnpm build && electron-builder --linux",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "build:css": "npx @tailwindcss/cli -i ./src/renderer/css/input.css -o ./src/renderer/css/output.css --watch"
+    "lint:fix": "eslint . --fix"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "electron": "^42.4.1",
     "music-metadata": "^11.13.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.0.0",
     "concurrently": "^10.0.3",
+    "electron": "^42.4.1",
     "electron-builder": "^26.15.3",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
@@ -40,5 +63,40 @@
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.0"
+  },
+  "build": {
+    "appId": "com.vedantkale.astralecho",
+    "productName": "AstralEcho",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "src/renderer/index.html",
+      "src/renderer/css/output.css",
+      "public/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "public/assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "public/assets/icon-main.png",
+      "category": "AudioVideo"
+    }
   }
 }
