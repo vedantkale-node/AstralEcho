@@ -54,8 +54,26 @@ async function init() {
 </div>
 
     <!-- Folder Path -->
-    <div class="px-5 py-3 border-b border-white/5 min-h-11 flex items-center">
-      <p id="folder-path" class="text-xs text-zinc-500 truncate leading-relaxed"></p>
+    <div class="px-5 py-3 border-b border-white/5 min-h-11 flex items-center justify-between gap-2">
+    <button
+      id="refresh-folder"
+      title="Refresh folder"
+      class="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-white/10 active:scale-90 transition-all duration-150"
+    >
+      <span class="material-symbols-rounded text-[16px]">refresh</span>
+    </button>
+    <p id="folder-path" class="text-xs text-zinc-500 truncate leading-relaxed flex-1"></p>
+
+      <div class="flex items-center gap-1 shrink-0">
+
+        <button
+          id="remove-folder"
+          title="Remove folder"
+          class="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 hover:text-red-400 hover:bg-red-500/10 active:scale-90 transition-all duration-150"
+        >
+          <span class="material-symbols-rounded text-[16px]">folder_off</span>
+        </button>
+      </div>
     </div>
 
     <!-- File List -->
@@ -791,6 +809,7 @@ async function init() {
     });
 
     let allFiles: any[] = [];
+    let currentFolder: string | null = lastFolder ?? null;
 
     function formatFileName(fileName: string) {
       return fileName
@@ -856,6 +875,22 @@ async function init() {
 
         video.addEventListener("error", () => resolve(""));
       });
+    }
+
+    async function loadFolder(folder: string) {
+      renderLoadingState(fileList);
+
+      try {
+        allFiles = await window.api.readFolder(folder);
+        await renderFiles(allFiles, fileList);
+        pathElement!.textContent = folder;
+        currentFolder = folder;
+      } catch (err) {
+        console.error("Failed to read folder:", err);
+        showToast(`Couldn't load folder: ${folder}`);
+        fileList.innerHTML = "";
+        allFiles = [];
+      }
     }
 
     async function playFile(
@@ -1097,18 +1132,7 @@ async function init() {
     const appLoading = document.getElementById("app-loading")!;
 
     if (lastFolder) {
-      renderLoadingState(fileList);
-
-      try {
-        allFiles = await window.api.readFolder(lastFolder);
-        await renderFiles(allFiles, fileList);
-        pathElement!.textContent = lastFolder;
-      } catch (err) {
-        console.error("Failed to read folder:", err);
-        showToast(`Couldn't load folder: ${lastFolder}`);
-        fileList.innerHTML = "";
-        allFiles = [];
-      }
+      await loadFolder(lastFolder);
 
       const restoreLoading = document.getElementById("restore-loading")!;
       const lastPlayedPath = await window.api.getLastPlayed();
@@ -1168,7 +1192,6 @@ async function init() {
               backgroundCover.style.opacity = "1";
             }, 150);
           }
-          // Loaded and ready, but not playing — user must press play.
         }
 
         restoreLoading.classList.add("hidden");
@@ -1183,21 +1206,47 @@ async function init() {
       if (!folder) return;
 
       await window.api.saveLastFolder(folder);
-
       search.value = "";
-      renderLoadingState(fileList);
-
-      try {
-        allFiles = await window.api.readFolder(folder);
-        await renderFiles(allFiles, fileList);
-        pathElement!.textContent = folder;
-      } catch (err) {
-        console.error("Failed to read folder:", err);
-        showToast(`Couldn't load folder: ${folder}`);
-        fileList.innerHTML = "";
-        allFiles = [];
-      }
+      await loadFolder(folder);
     });
+
+    document
+      .getElementById("refresh-folder")
+      ?.addEventListener("click", async () => {
+        if (!currentFolder) {
+          showToast("No folder open to refresh.", "info");
+          return;
+        }
+        search.value = "";
+        showToast("Refreshing folder...", "info", 1500);
+        await loadFolder(currentFolder);
+      });
+
+    document
+      .getElementById("remove-folder")
+      ?.addEventListener("click", async () => {
+        if (!currentFolder) return;
+
+        await window.api.clearLastFolder();
+        currentFolder = null;
+        allFiles = [];
+        currentPlaylist = [];
+        currentIndex = -1;
+        currentPlayingPath = null;
+
+        fileList.innerHTML = "";
+        pathElement!.textContent = "";
+        search.value = "";
+
+        player.pause();
+        player.src = "";
+        document.getElementById("now-playing")!.textContent = "Nothing Playing";
+        document.getElementById("player-controls")!.classList.add("hidden");
+        document.getElementById("placeholder")!.classList.remove("hidden");
+        setControlsEnabled(false);
+
+        showToast("Folder removed.", "info", 2000);
+      });
     document
       .getElementById("placeholder-open-folder")
       ?.addEventListener("click", () => {

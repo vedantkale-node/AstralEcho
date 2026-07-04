@@ -98,6 +98,10 @@ ipcMain.handle("save-last-folder", async (_, folder: unknown) => {
   await writeSettings({ lastFolder: folder });
 });
 
+ipcMain.handle("clear-last-folder", async () => {
+  await writeSettings({ lastFolder: null });
+});
+
 ipcMain.handle("get-last-played", async () => {
   const settings = await readSettings();
   return settings.lastPlayedPath ?? null;
