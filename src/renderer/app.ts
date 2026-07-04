@@ -8,6 +8,15 @@ async function init() {
     app.innerHTML = `
       <div class="flex flex-row-reverse h-screen bg-zinc-950 text-white overflow-hidden">
 
+  <!-- App Loading Overlay -->
+  <div
+    id="app-loading"
+    class="absolute inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-zinc-950"
+  >
+    <span class="material-symbols-rounded text-4xl animate-spin text-violet-500">progress_activity</span>
+    <p class="text-sm text-zinc-500">Loading Astral Echo...</p>
+  </div>
+
   <!-- Sidebar -->
   <aside
   id="sidebar"
@@ -788,6 +797,7 @@ async function init() {
         .replace(/\.[^/.]+$/, "")
         .replace(/_/g, " ")
         .replace(/\(.*?\)/g, "")
+        .replace(/[-–—]\s*$/, "")
         .trim();
     }
 
@@ -1084,6 +1094,7 @@ async function init() {
       );
       await renderFiles(filtered, fileList);
     });
+    const appLoading = document.getElementById("app-loading")!;
 
     if (lastFolder) {
       renderLoadingState(fileList);
@@ -1163,6 +1174,9 @@ async function init() {
         restoreLoading.classList.add("hidden");
       }
     }
+
+    appLoading.classList.add("hidden");
+
     button?.addEventListener("click", async () => {
       const folder = await window.api.pickFolder();
 
