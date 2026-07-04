@@ -855,6 +855,12 @@ async function init() {
           video.currentTime = 2;
         });
 
+        function cleanup() {
+          video.pause();
+          video.removeAttribute("src");
+          video.load();
+        }
+
         video.addEventListener("seeked", () => {
           const canvas = document.createElement("canvas");
 
@@ -864,16 +870,22 @@ async function init() {
           const ctx = canvas.getContext("2d");
 
           if (!ctx) {
+            cleanup();
             resolve("");
             return;
           }
 
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const result = canvas.toDataURL("image/jpeg");
 
-          resolve(canvas.toDataURL("image/jpeg"));
+          cleanup();
+          resolve(result);
         });
 
-        video.addEventListener("error", () => resolve(""));
+        video.addEventListener("error", () => {
+          cleanup();
+          resolve("");
+        });
       });
     }
 
