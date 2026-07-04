@@ -8,10 +8,18 @@ async function init() {
     app.innerHTML = `
       <div class="flex flex-row-reverse h-screen bg-zinc-950 text-white overflow-hidden">
 
+  <!-- Portrait-only top bar (hidden in landscape) -->
+  <div id="portrait-header" class="hidden items-center gap-2.5 px-5 py-4 border-b border-white/5 bg-zinc-900">
+    <div class="w-7 h-7 rounded-lg bg-linear-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-900/40">
+      <img src="../.././public/assets/icon-main.png">
+    </div>
+    <h1 class="text-[15px] font-semibold tracking-tight text-white">Astral Echo</h1>
+  </div>
+
   <!-- App Loading Overlay -->
   <div
     id="app-loading"
-    class="absolute inset-0 z-[100] flex flex-col items-center justify-center gap-3 bg-zinc-950"
+    class="absolute inset-0 z-100 flex flex-col items-center justify-center gap-3 bg-zinc-950"
   >
     <span class="material-symbols-rounded text-4xl animate-spin text-violet-500">progress_activity</span>
     <p class="text-sm text-zinc-500">Loading Astral Echo...</p>
@@ -49,7 +57,7 @@ async function init() {
     id="search"
     type="text"
     placeholder="Search..."
-    class="w-full rounded-lg bg-zinc-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-zinc-700 focus:ring-violet-500"
+    class="w-full rounded-lg mt-5 bg-zinc-800 px-3 py-2 text-sm text-white outline-none ring-1 ring-zinc-700 focus:ring-violet-500"
   />
 </div>
 
@@ -761,7 +769,7 @@ async function init() {
 
         case "ArrowUp":
           e.preventDefault();
-          player.volume = Math.min(player.volume + 0.1, 1);
+          player.volume = Math.min(player.volume + 0.05, 1);
           player.muted = false;
           volumeSlider.value = String(player.volume * 100);
           updateVolumeIcon();
@@ -771,7 +779,7 @@ async function init() {
 
         case "ArrowDown":
           e.preventDefault();
-          player.volume = Math.max(player.volume - 0.1, 0);
+          player.volume = Math.max(player.volume - 0.05, 0);
           volumeSlider.value = String(player.volume * 100);
           updateVolumeIcon();
           flashVolumeIndicator();
@@ -882,7 +890,33 @@ async function init() {
             return;
           }
 
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const targetRatio = canvas.width / canvas.height;
+          const videoRatio = video.videoWidth / video.videoHeight;
+
+          let sx = 0,
+            sy = 0,
+            sw = video.videoWidth,
+            sh = video.videoHeight;
+
+          if (videoRatio > targetRatio) {
+            sw = video.videoHeight * targetRatio;
+            sx = (video.videoWidth - sw) / 2;
+          } else {
+            sh = video.videoWidth / targetRatio;
+            sy = (video.videoHeight - sh) / 2;
+          }
+
+          ctx.drawImage(
+            video,
+            sx,
+            sy,
+            sw,
+            sh,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+          );
           const result = canvas.toDataURL("image/jpeg");
 
           cleanup();

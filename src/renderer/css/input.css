@@ -6,3 +6,36 @@ button:focus-visible,
 input:focus-visible {
   outline: none;
 }
+
+@media (orientation: portrait) {
+  #app > div {
+    flex-direction: column-reverse;
+  }
+
+  /* Show the dedicated top bar, hide the one inside the sidebar,
+     so branding always sits at the true top of the screen */
+  #portrait-header {
+    display: flex !important;
+  }
+
+  #sidebar > div:first-child {
+    display: none;
+  }
+
+  #sidebar {
+    width: auto !important;
+    height: 40vh;
+    margin: 0 2rem 2rem 2rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(255 255 255 / 0.05);
+  }
+
+  #resize-handle {
+    display: none;
+  }
+
+  main {
+    flex: 1;
+    min-height: 0;
+  }
+}
