@@ -401,10 +401,16 @@ async function init() {
     player.addEventListener("play", () => {
       playPauseBtn.querySelector("span")!.textContent = "pause";
       flashPlayPauseIndicator(false);
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "playing";
+      }
     });
     player.addEventListener("pause", () => {
       playPauseBtn.querySelector("span")!.textContent = "play_arrow";
       flashPlayPauseIndicator(true);
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.playbackState = "paused";
+      }
     });
 
     player.addEventListener("loadedmetadata", () => {
@@ -489,6 +495,26 @@ async function init() {
       }, 700);
     }
 
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.setActionHandler("play", () => safePlay());
+      navigator.mediaSession.setActionHandler("pause", () => player.pause());
+      navigator.mediaSession.setActionHandler("previoustrack", () =>
+        playPrevious(),
+      );
+      navigator.mediaSession.setActionHandler("nexttrack", () => playNext());
+      navigator.mediaSession.setActionHandler("seekbackward", () => {
+        player.currentTime = Math.max(player.currentTime - 5, 0);
+        flashSeekIndicator(-5);
+      });
+      navigator.mediaSession.setActionHandler("seekforward", () => {
+        player.currentTime = Math.min(
+          player.currentTime + 5,
+          player.duration || 0,
+        );
+        flashSeekIndicator(5);
+      });
+    }
+
     const volumeIndicator = document.getElementById("volume-indicator")!;
     const volumeIndicatorIcon = document.getElementById(
       "volume-indicator-icon",
@@ -528,6 +554,19 @@ async function init() {
     player.addEventListener("timeupdate", () => {
       progress.value = String(player.currentTime);
       currentTimeEl.textContent = formatTime(player.currentTime);
+
+      if ("mediaSession" in navigator && isFinite(player.duration)) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: player.duration,
+            playbackRate: player.playbackRate,
+            position: player.currentTime,
+          });
+        } catch {
+          // setPositionState can throw if duration/position are momentarily
+          // out of sync during a track switch — safe to ignore
+        }
+      }
     });
 
     let volumeSaveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -962,6 +1001,16 @@ async function init() {
 
       document.getElementById("now-playing")!.textContent =
         file.title ?? formatFileName(file.name);
+
+      if ("mediaSession" in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: file.title ?? formatFileName(file.name),
+          artist: "Astral Echo",
+          artwork: file.thumbnail
+            ? [{ src: file.thumbnail, sizes: "512x512", type: "image/jpeg" }]
+            : [],
+        });
+      }
 
       const placeholder = document.getElementById("placeholder")!;
       const backgroundCover = document.getElementById(
