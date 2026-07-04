@@ -209,18 +209,21 @@ const createWindow = async () => {
   const savedBounds = settings.windowBounds;
 
   const win = new BrowserWindow({
-    icon: path.join(process.cwd(), "public", "assets", "icon.ico"),
+    icon: path.join(__dirname, "..", "..", "public", "assets", "icon.ico"),
     width: savedBounds?.width ?? 1235,
     height: savedBounds?.height ?? 700,
     x: savedBounds?.x,
     y: savedBounds?.y,
     webPreferences: {
-      preload: path.join(process.cwd(), "dist", "electron", "preload.cjs"),
+      preload: path.join(__dirname, "preload.cjs"),
     },
   });
+
   win.webContents.openDevTools();
   Menu.setApplicationMenu(null);
-  win.loadFile(path.join(process.cwd(), "src", "renderer", "index.html"));
+  win.loadFile(
+    path.join(__dirname, "..", "..", "src", "renderer", "index.html"),
+  );
 
   if (settings.windowMaximized) {
     win.maximize();
