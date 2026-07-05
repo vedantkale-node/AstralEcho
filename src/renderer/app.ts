@@ -583,7 +583,7 @@ async function init() {
     let currentPlaylist: MediaFile[] = [];
     let currentIndex = -1;
     let isShuffle = false;
-    let isRepeat = false;
+    let repeatMode: "off" | "all" | "one" = "off";
     let currentPlayingPath: string | null = null;
 
     function updateActiveListItem() {
@@ -642,21 +642,36 @@ async function init() {
       window.api.saveShuffle(isShuffle);
     });
 
+    function applyRepeatModeUI() {
+      const icon = repeatBtn.querySelector("span")!;
+      icon.textContent = repeatMode === "one" ? "repeat_one" : "repeat";
+
+      const isActive = repeatMode !== "off";
+      repeatBtn.classList.toggle("text-violet-500", isActive);
+      repeatBtn.classList.toggle("text-zinc-300", !isActive);
+    }
+
     repeatBtn.addEventListener("click", () => {
-      isRepeat = !isRepeat;
-      repeatBtn.classList.toggle("text-violet-500", isRepeat);
-      repeatBtn.classList.toggle("text-zinc-300", !isRepeat);
-      window.api.saveRepeat(isRepeat);
+      repeatMode =
+        repeatMode === "off" ? "all" : repeatMode === "all" ? "one" : "off";
+      applyRepeatModeUI();
+      window.api.saveRepeat(repeatMode);
     });
 
     Promise.all([window.api.getShuffle(), window.api.getRepeat()]).then(
       ([savedShuffle, savedRepeat]) => {
         isShuffle = savedShuffle;
-        isRepeat = savedRepeat;
+        repeatMode =
+          savedRepeat === "one" ||
+          savedRepeat === "all" ||
+          savedRepeat === "off"
+            ? savedRepeat
+            : savedRepeat
+              ? "all"
+              : "off"; // backward-compat with old boolean-based saved value
         shuffleBtn.classList.toggle("text-violet-500", isShuffle);
         shuffleBtn.classList.toggle("text-zinc-300", !isShuffle);
-        repeatBtn.classList.toggle("text-violet-500", isRepeat);
-        repeatBtn.classList.toggle("text-zinc-300", !isRepeat);
+        applyRepeatModeUI();
       },
     );
 
@@ -771,7 +786,7 @@ async function init() {
     });
 
     player.addEventListener("ended", () => {
-      if (isRepeat) {
+      if (repeatMode === "one") {
         player.currentTime = 0;
         safePlay();
         return;
@@ -1129,10 +1144,11 @@ async function init() {
       } else {
         nextIndex = currentIndex + 1;
         if (nextIndex >= currentPlaylist.length) {
-          if (!isRepeat) return;
+          if (repeatMode === "off") return;
           nextIndex = 0;
         }
       }
+
       const file = currentPlaylist[nextIndex];
       const isVideo = isVideoFile(file.name);
       playFile(file, currentPlaylist, nextIndex, isVideo);

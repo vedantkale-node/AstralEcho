@@ -1,6 +1,7 @@
 import * as electron from "electron/main";
-const { app, BrowserWindow } = electron;
 import path from "node:path";
+const { app, BrowserWindow } = electron;
+
 import { dialog, ipcMain, Menu } from "electron";
 import fs from "node:fs/promises";
 import { parseFile } from "music-metadata";
@@ -9,6 +10,7 @@ import {
   AUDIO_EXTENSIONS,
   type MediaFile,
 } from "./types/media.js";
+app.setPath("userData", path.join(app.getPath("appData"), "astral-echo"));
 
 async function scanFolder(folderPath: string): Promise<MediaFile[]> {
   const entries = await fs.readdir(folderPath, {
@@ -151,10 +153,11 @@ ipcMain.handle("save-shuffle", async (_, shuffle: boolean) => {
 
 ipcMain.handle("get-repeat", async () => {
   const settings = await readSettings();
-  return settings.repeat ?? false;
+  return settings.repeat ?? "off";
 });
 
-ipcMain.handle("save-repeat", async (_, repeat: boolean) => {
+ipcMain.handle("save-repeat", async (_, repeat: unknown) => {
+  if (repeat !== "off" && repeat !== "all" && repeat !== "one") return;
   await writeSettings({ repeat });
 });
 

@@ -35,8 +35,8 @@ declare global {
       saveVolume: (volume: number) => Promise<void>;
       getShuffle: () => Promise<boolean>;
       saveShuffle: (shuffle: boolean) => Promise<void>;
-      getRepeat: () => Promise<boolean>;
-      saveRepeat: (repeat: boolean) => Promise<void>;
+      getRepeat: () => Promise<"off" | "all" | "one" | boolean>;
+      saveRepeat: (repeat: "off" | "all" | "one") => Promise<void>;
       getSidebarWidth: () => Promise<number>;
       saveSidebarWidth: (width: number) => Promise<void>;
     };

@@ -1,6 +1,6 @@
 {
   "name": "astral-echo",
-  "productName": "AstralEcho",
+  "productName": "Astral Echo",
   "version": "1.0.0",
   "description": "A fast, lightweight desktop media player for local audio and video libraries.",
   "type": "module",
@@ -66,7 +66,7 @@
   },
   "build": {
     "appId": "com.vedantkale.astralecho",
-    "productName": "AstralEcho",
+    "productName": "Astral Echo",
     "directories": {
       "output": "release"
     },
