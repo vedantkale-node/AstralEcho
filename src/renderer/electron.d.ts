@@ -13,11 +13,14 @@ declare global {
   interface Window {
     api: {
       version: string;
+      openExternal(url: string): Promise<void>;
       pickFolder: () => Promise<string | null>;
       readFolder: (folder: string) => Promise<MediaFile[]>;
       getLastFolder: () => Promise<string | null>;
       saveLastFolder: (folder: string) => Promise<void>;
       clearLastFolder: () => Promise<void>;
+      getFileOrder(folder: string): Promise<string[] | null>;
+      saveFileOrder(folder: string, order: string[]): Promise<void>;
       getThumbnailCache(): Promise<Record<string, string>>;
       saveThumbnailCacheEntry(
         filePath: string,

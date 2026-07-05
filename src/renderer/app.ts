@@ -97,6 +97,18 @@ async function init() {
   id="resize-handle"
   class="absolute top-0 left-0 h-full w-1 cursor-ew-resize hover:bg-violet-500"
 ></div>
+
+    <!-- Footer credit -->
+    <div class="px-5 py-3 border-t border-white/5 text-center">
+      <p class="text-[10px] text-zinc-400">
+        Astral Echo · Built by
+          <a
+          href="#"
+          id="footer-credit-link"
+          class="text-zinc-500 hover:text-violet-400 transition-colors"
+        >Vedant Kale</a>
+      </p>
+    </div>
   </aside>
 
   <!-- Main Content -->
@@ -1015,6 +1027,20 @@ async function init() {
       try {
         allFiles = await window.api.readFolder(folder);
 
+        const savedOrder = await window.api.getFileOrder(folder);
+        if (savedOrder) {
+          const orderMap = new Map(savedOrder.map((p, i) => [p, i]));
+          allFiles.sort((a, b) => {
+            const aIndex = orderMap.has(a.path)
+              ? orderMap.get(a.path)!
+              : Infinity;
+            const bIndex = orderMap.has(b.path)
+              ? orderMap.get(b.path)!
+              : Infinity;
+            return aIndex - bIndex;
+          });
+        }
+
         for (const file of allFiles) {
           const cached = thumbnailCache[file.path];
           if (cached) {
@@ -1178,6 +1204,10 @@ async function init() {
 
         item.innerHTML = `
   <div class="flex items-center gap-3">
+    <span
+      class="drag-handle material-symbols-rounded text-zinc-600 text-[16px] leading-none cursor-grab active:cursor-grabbing shrink-0 opacity-0 group-hover:opacity-100 transition-opacity -mx-1"
+    >drag_indicator</span>
+
     <div class="relative w-28 aspect-video rounded overflow-hidden shrink-0 bg-zinc-800">
       <img
         src=""
@@ -1266,13 +1296,57 @@ async function init() {
         }
         item.title = file.name;
         item.dataset.path = file.path;
+        item.draggable = true;
         item.className =
-          "cursor-pointer rounded-xl p-2 hover:bg-zinc-800 transition-colors" +
+          "group cursor-pointer rounded-xl p-2 hover:bg-zinc-800 transition-colors" +
           (file.path === currentPlayingPath
             ? " bg-violet-500/15 ring-1 ring-violet-500/30"
             : "");
         item.addEventListener("click", () => {
           playFile(file, files, index, isVideo);
+        });
+
+        item.addEventListener("dragstart", (e) => {
+          e.dataTransfer!.effectAllowed = "move";
+          e.dataTransfer!.setData("text/plain", file.path);
+          item.classList.add("opacity-40");
+        });
+
+        item.addEventListener("dragend", () => {
+          item.classList.remove("opacity-40");
+        });
+
+        item.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          item.classList.add("border-t-2", "border-violet-500");
+        });
+
+        item.addEventListener("dragleave", () => {
+          item.classList.remove("border-t-2", "border-violet-500");
+        });
+
+        item.addEventListener("drop", async (e) => {
+          e.preventDefault();
+          item.classList.remove("border-t-2", "border-violet-500");
+
+          const draggedPath = e.dataTransfer!.getData("text/plain");
+          if (!draggedPath || draggedPath === file.path || !currentFolder)
+            return;
+
+          const draggedIndex = allFiles.findIndex(
+            (f) => f.path === draggedPath,
+          );
+          const targetIndex = allFiles.findIndex((f) => f.path === file.path);
+          if (draggedIndex === -1 || targetIndex === -1) return;
+
+          const [movedFile] = allFiles.splice(draggedIndex, 1);
+          allFiles.splice(targetIndex, 0, movedFile);
+
+          await renderFiles(allFiles, fileList);
+          window.api.saveFileOrder(
+            currentFolder,
+            allFiles.map((f) => f.path),
+          );
         });
 
         fileList.appendChild(item);
@@ -1400,6 +1474,13 @@ async function init() {
     }
 
     appLoading.classList.add("hidden");
+
+    document
+      .getElementById("footer-credit-link")
+      ?.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.api.openExternal?.("https://github.com/vedantkale-node");
+      });
 
     button?.addEventListener("click", async () => {
       const folder = await window.api.pickFolder();

@@ -2,7 +2,7 @@ import * as electron from "electron/main";
 import path from "node:path";
 const { app, BrowserWindow } = electron;
 
-import { dialog, ipcMain, Menu } from "electron";
+import { dialog, ipcMain, Menu, shell } from "electron";
 import fs from "node:fs/promises";
 import { parseFile } from "music-metadata";
 import {
@@ -39,6 +39,11 @@ async function scanFolder(folderPath: string): Promise<MediaFile[]> {
   }
   return media;
 }
+
+ipcMain.handle("open-external", async (_, url: unknown) => {
+  if (typeof url !== "string" || !url.startsWith("https://")) return;
+  await shell.openExternal(url);
+});
 
 ipcMain.handle("pick-folder", async () => {
   const result = await dialog.showOpenDialog({
@@ -85,6 +90,10 @@ async function writeThumbnailCache(cache: Record<string, string>) {
   await fs.mkdir(path.dirname(thumbnailCachePath), { recursive: true });
   await fs.writeFile(thumbnailCachePath, JSON.stringify(cache));
 }
+
+ipcMain.handle("get-thumbnail-cache", async () => {
+  return readThumbnailCache();
+});
 
 async function readSettings(): Promise<Record<string, any>> {
   try {
@@ -171,9 +180,22 @@ ipcMain.handle("save-sidebar-width", async (_, width: unknown) => {
   await writeSettings({ sidebarWidth: width });
 });
 
-ipcMain.handle("get-thumbnail-cache", async () => {
-  return readThumbnailCache();
+ipcMain.handle("get-file-order", async (_, folder: unknown) => {
+  if (typeof folder !== "string") return null;
+  const settings = await readSettings();
+  return settings.fileOrders?.[folder] ?? null;
 });
+
+ipcMain.handle(
+  "save-file-order",
+  async (_, folder: unknown, order: unknown) => {
+    if (typeof folder !== "string" || !Array.isArray(order)) return;
+    const settings = await readSettings();
+    const fileOrders = settings.fileOrders ?? {};
+    fileOrders[folder] = order;
+    await writeSettings({ fileOrders });
+  },
+);
 
 ipcMain.handle(
   "save-thumbnail-cache-entry",
