@@ -1003,6 +1003,13 @@ async function init() {
         await renderFiles(allFiles, fileList);
         pathElement!.textContent = folder;
         currentFolder = folder;
+
+        const placeholder = document.getElementById("placeholder")!;
+        if (allFiles.length > 0) {
+          placeholder.classList.add("hidden");
+        } else {
+          placeholder.classList.remove("hidden");
+        }
       } catch (err) {
         console.error("Failed to read folder:", err);
         showToast(`Couldn't load folder: ${folder}`);
@@ -1279,7 +1286,9 @@ async function init() {
         restoreLoading.classList.remove("hidden");
 
         const lastIndex = allFiles.findIndex((f) => f.path === lastPlayedPath);
-        if (lastIndex !== -1) {
+        if (lastIndex === -1) {
+          showToast("Last played file could not be found.", "info", 3000);
+        } else {
           const file = allFiles[lastIndex];
           const isVideo = isVideoFile(file.name);
 
