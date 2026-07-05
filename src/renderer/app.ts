@@ -187,6 +187,14 @@ async function init() {
     class="hidden absolute inset-0 h-full w-full object-contain z-10"
   ></video>
 
+  <!-- Fullscreen title overlay (hidden outside fullscreen) -->
+  <div
+    id="fullscreen-title"
+    class="hidden absolute top-0 left-0 right-0 z-30 px-8 pt-6 pb-16 bg-gradient-to-b from-black/80 to-transparent transition-opacity duration-300"
+  >
+    <p class="text-lg font-semibold text-white truncate" id="fullscreen-title-text">Nothing Playing</p>
+  </div>
+
   <!-- Volume Indicator -->
   <div
     id="volume-indicator"
@@ -721,11 +729,15 @@ async function init() {
 
     const playerContainer = document.getElementById("player-container")!;
 
+    const fullscreenTitle = document.getElementById("fullscreen-title")!;
+
     document.addEventListener("fullscreenchange", () => {
       const icon = fullscreenBtn.querySelector("span")!;
       const isFs = !!document.fullscreenElement;
 
       icon.textContent = isFs ? "fullscreen_exit" : "fullscreen";
+
+      fullscreenTitle.classList.toggle("hidden", !isFs);
 
       playerWrapper.classList.toggle("p-8", !isFs);
       playerWrapper.classList.toggle("gap-4", !isFs);
@@ -791,6 +803,7 @@ async function init() {
       if (playerControls.classList.contains("player-active")) {
         playerControls.classList.remove("opacity-0", "pointer-events-none");
       }
+      fullscreenTitle.classList.remove("opacity-0");
       playerWrapper.classList.remove("cursor-none");
       clearTimeout(hideControlsTimeout!);
 
@@ -798,6 +811,7 @@ async function init() {
         hideControlsTimeout = setTimeout(() => {
           if (!player.paused) {
             playerControls.classList.add("opacity-0", "pointer-events-none");
+            fullscreenTitle.classList.add("opacity-0");
             playerWrapper.classList.add("cursor-none");
           }
         }, 3000);
@@ -810,6 +824,7 @@ async function init() {
         clearTimeout(hideControlsTimeout!);
         if (!player.paused) {
           playerControls.classList.add("opacity-0", "pointer-events-none");
+          fullscreenTitle.classList.add("opacity-0");
         }
       }
     });
@@ -1113,8 +1128,10 @@ async function init() {
 
       window.api.saveLastPlayed(file.path);
 
-      document.getElementById("now-playing")!.textContent =
-        file.title ?? formatFileName(file.name);
+      const displayName = file.title ?? formatFileName(file.name);
+      document.getElementById("now-playing")!.textContent = displayName;
+      document.getElementById("fullscreen-title-text")!.textContent =
+        displayName;
 
       if ("mediaSession" in navigator) {
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -1437,8 +1454,11 @@ async function init() {
           updateActiveListItem();
           setControlsEnabled(true);
 
+          const restoredDisplayName = file.title ?? formatFileName(file.name);
           document.getElementById("now-playing")!.textContent =
-            file.title ?? formatFileName(file.name);
+            restoredDisplayName;
+          document.getElementById("fullscreen-title-text")!.textContent =
+            restoredDisplayName;
 
           const placeholder = document.getElementById("placeholder")!;
           const backgroundCover = document.getElementById(
@@ -1467,6 +1487,8 @@ async function init() {
               if (meta.title) {
                 file.title = meta.title;
                 document.getElementById("now-playing")!.textContent =
+                  meta.title;
+                document.getElementById("fullscreen-title-text")!.textContent =
                   meta.title;
               }
 
