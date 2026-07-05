@@ -58,7 +58,7 @@ a:focus-visible {
     display: flex !important;
   }
 
-  #sidebar > div:first-child {
+  #sidebar-header-logo {
     display: none;
   }
 

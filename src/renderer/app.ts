@@ -44,15 +44,18 @@ async function init() {
   class="relative w-100 shrink-0 flex flex-col bg-zinc-900 border-r border-white/5 shadow-2xl"
 >
 
-    <!-- App Header -->
-    <div class="px-5 pt-6 pb-5 border-b border-white/5">
-      <div class="flex items-center gap-2.5 mb-5">
+    <!-- App Header (logo/title only — hidden in portrait, replaced by #portrait-header) -->
+    <div id="sidebar-header-logo" class="px-5 pt-6 pb-5 border-b border-white/5">
+      <div class="flex items-center gap-2.5">
         <div class="w-7 h-7 rounded-lg bg-linear-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-900/40">
           <img src="../.././public/assets/icon-main.png">
         </div>
         <h1 class="text-[15px] font-semibold tracking-tight text-white">Astral Echo</h1>
       </div>
+    </div>
 
+    <!-- Open Folder (always visible, both orientations) -->
+    <div class="px-5 pt-5 ">
       <button
         id="pick-folder"
         class="w-full flex items-center justify-center gap-2 rounded-lg bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white text-sm font-medium px-4 py-2.5 transition-colors duration-150 shadow-lg shadow-violet-900/30"
@@ -65,7 +68,7 @@ async function init() {
     </div>
 
     <!-- NEW: Search -->
-<div class="px-2 pb-2">
+<div class="px-5 pb-2">
   <input
     id="search"
     type="text"
@@ -144,16 +147,16 @@ async function init() {
   <!-- Background -->
   <img
     id="background-cover"
-    src="../.././public/assets/music-placeholder.png"
-    class="absolute inset-0 z-10 w-full h-full object-cover bg-black/30"
+    src=""
+    class="hidden absolute inset-0 z-10 w-full h-full object-cover bg-black/30"
   />
 
-  <div class="absolute inset-0 bg-black/50"></div>
+  <div id="background-overlay" class="hidden absolute inset-0 bg-black/50"></div>
 
   <!-- Placeholder -->
   <div
     id="placeholder"
-    class="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 z-10 gap-4 px-8 text-center"
+    class="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 z-10 gap-4 px-8 text-center bg-zinc-900"
   >
     <span class="material-symbols-rounded text-6xl text-violet-500">library_music</span>
     <div>
@@ -422,7 +425,7 @@ async function init() {
       .getElementById("portrait-credit-link")
       ?.addEventListener("click", (e) => {
         e.preventDefault();
-        window.api.openExternal?.("https://vedantkale.in/");
+        window.api.openExternal?.("https://vedantkale.in");
       });
 
     playPauseBtn.addEventListener("click", () => {
@@ -698,7 +701,7 @@ async function init() {
             ? savedRepeat
             : savedRepeat
               ? "all"
-              : "off"; // backward-compat with old boolean-based saved value
+              : "off";
         shuffleBtn.classList.toggle("text-violet-500", isShuffle);
         shuffleBtn.classList.toggle("text-zinc-300", !isShuffle);
         applyRepeatModeUI();
@@ -1138,9 +1141,13 @@ async function init() {
       if (isVideo) {
         player.classList.remove("hidden");
         backgroundCover.classList.add("hidden");
+        document.getElementById("background-overlay")!.classList.add("hidden");
       } else {
         player.classList.add("hidden");
         backgroundCover.classList.remove("hidden");
+        document
+          .getElementById("background-overlay")!
+          .classList.remove("hidden");
         let cover = file.thumbnail;
         if (!cover) {
           const meta = await window.api.getAudioMetadata(file);
@@ -1511,6 +1518,12 @@ async function init() {
     });
 
     document
+      .getElementById("placeholder-open-folder")
+      ?.addEventListener("click", () => {
+        button?.click();
+      });
+
+    document
       .getElementById("refresh-folder")
       ?.addEventListener("click", async () => {
         if (!currentFolder) {
@@ -1543,6 +1556,8 @@ async function init() {
         document.getElementById("now-playing")!.textContent = "Nothing Playing";
         document.getElementById("player-controls")!.classList.add("hidden");
         document.getElementById("placeholder")!.classList.remove("hidden");
+        document.getElementById("background-cover")!.classList.add("hidden");
+        document.getElementById("background-overlay")!.classList.add("hidden");
         setControlsEnabled(false);
 
         showToast("Folder removed.", "info", 2000);
