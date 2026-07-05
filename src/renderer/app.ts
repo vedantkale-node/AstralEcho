@@ -874,6 +874,34 @@ async function init() {
       return VIDEO_EXTS.includes(ext);
     }
 
+    function createQueue(limit: number) {
+      let active = 0;
+      const queue: (() => void)[] = [];
+
+      function runNext() {
+        if (active >= limit || queue.length === 0) return;
+        active++;
+        const task = queue.shift()!;
+        task();
+      }
+
+      return function enqueue<T>(fn: () => Promise<T>): Promise<T> {
+        return new Promise((resolve, reject) => {
+          queue.push(() => {
+            fn()
+              .then(resolve, reject)
+              .finally(() => {
+                active--;
+                runNext();
+              });
+          });
+          runNext();
+        });
+      };
+    }
+
+    const thumbnailQueue = createQueue(4);
+
     function formatDuration(seconds: number): string {
       if (!isFinite(seconds) || seconds < 0) return "";
 
@@ -1144,16 +1172,19 @@ async function init() {
         }
 
         if (isVideo) {
-          if (!file.thumbnail || typeof file.duration !== "number") {
-            file.thumbnail = await generateThumbnail(
-              file.path,
-              setDurationBadge,
-            );
+          if (file.thumbnail) {
+            thumbnail.src = file.thumbnail;
+          } else {
+            thumbnailQueue(() =>
+              generateThumbnail(file.path, setDurationBadge),
+            ).then((result) => {
+              if (result) {
+                file.thumbnail = result;
+                thumbnail.src = result;
+              }
+            });
           }
-          if (file.thumbnail) thumbnail.src = file.thumbnail;
-        }
-        // Audio
-        else {
+        } else {
           if (!file.thumbnail) {
             thumbnail.src = "../.././public/assets/music-placeholder.png";
           }
