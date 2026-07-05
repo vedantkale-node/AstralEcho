@@ -1004,6 +1004,12 @@ async function init() {
         pathElement!.textContent = folder;
         currentFolder = folder;
 
+        currentPlaylist = [];
+        currentIndex = -1;
+        currentPlayingPath = null;
+        setControlsEnabled(false);
+        updateActiveListItem();
+
         const placeholder = document.getElementById("placeholder")!;
         if (allFiles.length > 0) {
           placeholder.classList.add("hidden");
