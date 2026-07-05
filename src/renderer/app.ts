@@ -709,7 +709,6 @@ async function init() {
       playerControls.classList.toggle("pt-16", isFs);
     });
 
-    // Single click toggles play/pause, double click toggles fullscreen (YouTube-style)
     let playerClickTimer: ReturnType<typeof setTimeout> | null = null;
 
     document
@@ -782,7 +781,6 @@ async function init() {
     });
 
     document.addEventListener("keydown", (e) => {
-      // Don't hijack keys while typing in the search box
       if (document.activeElement === search) return;
 
       switch (e.code) {
@@ -1065,6 +1063,18 @@ async function init() {
           file.thumbnail = cover;
           if (meta.duration) file.duration = meta.duration;
           if (meta.title) file.title = meta.title;
+
+          if (
+            cover &&
+            "mediaSession" in navigator &&
+            currentPlayingPath === file.path
+          ) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: file.title ?? formatFileName(file.name),
+              artist: "Astral Echo",
+              artwork: [{ src: cover, sizes: "512x512", type: "image/jpeg" }],
+            });
+          }
         }
         const bg = cover ?? "../.././public/assets/music-placeholder.png";
 
@@ -1310,6 +1320,20 @@ async function init() {
                 file.title = meta.title;
                 document.getElementById("now-playing")!.textContent =
                   meta.title;
+              }
+
+              if (
+                cover &&
+                "mediaSession" in navigator &&
+                currentPlayingPath === file.path
+              ) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                  title: file.title ?? formatFileName(file.name),
+                  artist: "Astral Echo",
+                  artwork: [
+                    { src: cover, sizes: "512x512", type: "image/jpeg" },
+                  ],
+                });
               }
             }
             const bg = cover ?? "../.././public/assets/music-placeholder.png";

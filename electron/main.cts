@@ -212,7 +212,7 @@ const createWindow = async () => {
 
   let saveBoundsTimeout: ReturnType<typeof setTimeout> | null = null;
   const persistBounds = () => {
-    if (win.isMaximized()) return; // don't overwrite good bounds while maximized
+    if (win.isMaximized()) return;
     clearTimeout(saveBoundsTimeout!);
     saveBoundsTimeout = setTimeout(() => {
       writeSettings({ windowBounds: win.getBounds() });
