@@ -4,6 +4,8 @@ const app = document.getElementById("app");
 async function init() {
   if (app) {
     const lastFolder = await window.api.getLastFolder();
+    let thumbnailCache: Record<string, string> =
+      await window.api.getThumbnailCache();
 
     app.innerHTML = `
       <div class="flex flex-row-reverse h-screen bg-zinc-950 text-white overflow-hidden">
@@ -562,10 +564,7 @@ async function init() {
             playbackRate: player.playbackRate,
             position: player.currentTime,
           });
-        } catch {
-          // setPositionState can throw if duration/position are momentarily
-          // out of sync during a track switch — safe to ignore
-        }
+        } catch {}
       }
     });
 
@@ -1000,6 +999,20 @@ async function init() {
 
       try {
         allFiles = await window.api.readFolder(folder);
+
+        for (const file of allFiles) {
+          const cached = thumbnailCache[file.path];
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              file.thumbnail = parsed.thumbnail;
+              if (typeof parsed.duration === "number") {
+                file.duration = parsed.duration;
+              }
+            } catch {}
+          }
+        }
+
         await renderFiles(allFiles, fileList);
         pathElement!.textContent = folder;
         currentFolder = folder;
@@ -1204,6 +1217,11 @@ async function init() {
               if (result) {
                 file.thumbnail = result;
                 thumbnail.src = result;
+                window.api.saveThumbnailCacheEntry(
+                  file.path,
+                  result,
+                  typeof file.duration === "number" ? file.duration : null,
+                );
               }
             });
           }

@@ -65,6 +65,24 @@ ipcMain.handle("read-folder", async (_, folderPath: unknown) => {
 });
 
 const settingsPath = path.join(app.getPath("userData"), "settings.json");
+const thumbnailCachePath = path.join(
+  app.getPath("userData"),
+  "thumbnails.json",
+);
+
+async function readThumbnailCache(): Promise<Record<string, string>> {
+  try {
+    const content = await fs.readFile(thumbnailCachePath, "utf8");
+    return JSON.parse(content);
+  } catch {
+    return {};
+  }
+}
+
+async function writeThumbnailCache(cache: Record<string, string>) {
+  await fs.mkdir(path.dirname(thumbnailCachePath), { recursive: true });
+  await fs.writeFile(thumbnailCachePath, JSON.stringify(cache));
+}
 
 async function readSettings(): Promise<Record<string, any>> {
   try {
@@ -149,6 +167,24 @@ ipcMain.handle("save-sidebar-width", async (_, width: unknown) => {
   if (typeof width !== "number" || !isFinite(width) || width < 0) return;
   await writeSettings({ sidebarWidth: width });
 });
+
+ipcMain.handle("get-thumbnail-cache", async () => {
+  return readThumbnailCache();
+});
+
+ipcMain.handle(
+  "save-thumbnail-cache-entry",
+  async (_, filePath: unknown, thumbnail: unknown, duration: unknown) => {
+    if (typeof filePath !== "string" || typeof thumbnail !== "string") return;
+
+    const cache = await readThumbnailCache();
+    cache[filePath] = JSON.stringify({
+      thumbnail,
+      duration: typeof duration === "number" ? duration : null,
+    });
+    await writeThumbnailCache(cache);
+  },
+);
 
 ipcMain.handle("get-audio-metadata", async (_, file: MediaFile) => {
   if (!file || typeof file.path !== "string" || file.path.trim() === "") {

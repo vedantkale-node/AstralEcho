@@ -18,7 +18,13 @@ declare global {
       getLastFolder: () => Promise<string | null>;
       saveLastFolder: (folder: string) => Promise<void>;
       clearLastFolder: () => Promise<void>;
-      getAudioMetadata(file: any): Promise<{
+      getThumbnailCache(): Promise<Record<string, string>>;
+      saveThumbnailCacheEntry(
+        filePath: string,
+        thumbnail: string,
+        duration: number | null,
+      ): Promise<void>;
+      getAudioMetadata(file: MediaFile): Promise<{
         cover: string | null;
         duration: number | null;
         title: string | null;
