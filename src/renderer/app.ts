@@ -11,11 +11,22 @@ async function init() {
       <div class="flex flex-row-reverse h-screen bg-zinc-950 text-white overflow-hidden">
 
   <!-- Portrait-only top bar (hidden in landscape) -->
-  <div id="portrait-header" class="hidden items-center gap-2.5 px-5 py-4 border-b border-white/5 bg-zinc-900">
-    <div class="w-7 h-7 rounded-lg bg-linear-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-900/40">
-      <img src="../.././public/assets/icon-main.png">
+  <div id="portrait-header" class="hidden items-center justify-between gap-2.5 px-5 py-4 border-b border-white/5 bg-zinc-900">
+    <div class="flex items-center gap-2.5">
+      <div class="w-7 h-7 rounded-lg bg-linear-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-900/40">
+        <img src="../.././public/assets/icon-main.png">
+      </div>
+      <h1 class="text-[15px] font-semibold tracking-tight text-white">Astral Echo</h1>
     </div>
-    <h1 class="text-[15px] font-semibold tracking-tight text-white">Astral Echo</h1>
+
+    <p class="text-xs text-zinc-400">
+      Built by
+    <a
+        href="#"
+        id="portrait-credit-link"
+        class="font-medium text-zinc-200 hover:text-violet-400 transition-colors"
+      >Vedant Kale</a>
+    </p>
   </div>
 
   <!-- App Loading Overlay -->
@@ -99,7 +110,7 @@ async function init() {
 ></div>
 
     <!-- Footer credit -->
-    <div class="px-5 py-3 border-t border-white/5 text-center">
+    <div id="sidebar-footer-credit" class="px-5 py-3 border-t border-white/5 text-center">
       <p class="text-[10px] text-zinc-400">
         Astral Echo · Built by
           <a
@@ -406,6 +417,13 @@ async function init() {
       }
       return `${m}:${s}`;
     }
+
+    document
+      .getElementById("portrait-credit-link")
+      ?.addEventListener("click", (e) => {
+        e.preventDefault();
+        window.api.openExternal?.("https://vedantkale.in/");
+      });
 
     playPauseBtn.addEventListener("click", () => {
       if (player.paused) safePlay();
@@ -1479,7 +1497,7 @@ async function init() {
       .getElementById("footer-credit-link")
       ?.addEventListener("click", (e) => {
         e.preventDefault();
-        window.api.openExternal?.("https://github.com/vedantkale-node");
+        window.api.openExternal?.("https://vedantkale.in");
       });
 
     button?.addEventListener("click", async () => {

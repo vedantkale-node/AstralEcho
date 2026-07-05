@@ -9,6 +9,17 @@
   font-display: block;
 }
 
+* {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#search,
+input[type="text"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 .material-symbols-rounded {
   font-family: "Material Symbols Rounded";
   font-weight: normal;
@@ -32,11 +43,12 @@
 
 button:focus,
 input:focus,
+a:focus,
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+a:focus-visible {
   outline: none;
 }
-
 @media (orientation: portrait) {
   #app > div {
     flex-direction: column-reverse;
@@ -56,6 +68,10 @@ input:focus-visible {
     margin: 0 2rem 2rem 2rem;
     border-radius: 0.75rem;
     border: 1px solid rgb(255 255 255 / 0.05);
+  }
+
+  #sidebar-footer-credit {
+    display: none !important;
   }
 
   #resize-handle {

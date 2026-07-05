@@ -67,6 +67,7 @@
   "build": {
     "appId": "com.vedantkale.astralecho",
     "productName": "Astral Echo",
+    "copyright": "Copyright © 2026 Vedant Kale",
     "directories": {
       "output": "release"
     },

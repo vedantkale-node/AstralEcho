@@ -11,13 +11,16 @@
     --color-red-500: oklch(63.7% 0.237 25.331);
     --color-red-600: oklch(57.7% 0.245 27.325);
     --color-indigo-600: oklch(51.1% 0.262 276.966);
+    --color-violet-400: oklch(70.2% 0.183 293.541);
     --color-violet-500: oklch(60.6% 0.25 292.717);
     --color-violet-600: oklch(54.1% 0.281 293.009);
     --color-violet-700: oklch(49.1% 0.27 292.581);
     --color-violet-900: oklch(38% 0.189 293.745);
+    --color-zinc-200: oklch(92% 0.004 286.32);
     --color-zinc-300: oklch(87.1% 0.006 286.286);
     --color-zinc-400: oklch(70.5% 0.015 286.067);
     --color-zinc-500: oklch(55.2% 0.016 285.938);
+    --color-zinc-600: oklch(44.2% 0.017 285.786);
     --color-zinc-700: oklch(37% 0.013 285.805);
     --color-zinc-800: oklch(27.4% 0.006 286.033);
     --color-zinc-900: oklch(21% 0.006 285.885);
@@ -286,6 +289,9 @@
       max-width: 96rem;
     }
   }
+  .-mx-1 {
+    margin-inline: calc(var(--spacing) * -1);
+  }
   .mt-5 {
     margin-top: calc(var(--spacing) * 5);
   }
@@ -403,6 +409,9 @@
   .cursor-ew-resize {
     cursor: ew-resize;
   }
+  .cursor-grab {
+    cursor: grab;
+  }
   .cursor-none {
     cursor: none;
   }
@@ -493,6 +502,14 @@
     border-style: var(--tw-border-style);
     border-width: 1px;
   }
+  .border-t {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+  }
+  .border-t-2 {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 2px;
+  }
   .border-r {
     border-right-style: var(--tw-border-style);
     border-right-width: 1px;
@@ -500,6 +517,9 @@
   .border-b {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
+  }
+  .border-violet-500 {
+    border-color: var(--color-violet-500);
   }
   .border-white\/5 {
     border-color: color-mix(in srgb, #fff 5%, transparent);
@@ -730,6 +750,10 @@
   .text-\[32px\] {
     font-size: 32px;
   }
+  .leading-none {
+    --tw-leading: 1;
+    line-height: 1;
+  }
   .leading-relaxed {
     --tw-leading: var(--leading-relaxed);
     line-height: var(--leading-relaxed);
@@ -756,6 +780,9 @@
   .text-white {
     color: var(--color-white);
   }
+  .text-zinc-200 {
+    color: var(--color-zinc-200);
+  }
   .text-zinc-300 {
     color: var(--color-zinc-300);
   }
@@ -764,6 +791,9 @@
   }
   .text-zinc-500 {
     color: var(--color-zinc-500);
+  }
+  .text-zinc-600 {
+    color: var(--color-zinc-600);
   }
   .uppercase {
     text-transform: uppercase;
@@ -866,6 +896,13 @@
     --tw-outline-style: none;
     outline-style: none;
   }
+  .group-hover\:opacity-100 {
+    &:is(:where(.group):hover *) {
+      @media (hover: hover) {
+        opacity: 100%;
+      }
+    }
+  }
   .group-hover\/volume\:w-20 {
     &:is(:where(.group\/volume):hover *) {
       @media (hover: hover) {
@@ -921,6 +958,13 @@
       }
     }
   }
+  .hover\:text-violet-400 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-violet-400);
+      }
+    }
+  }
   .hover\:text-white {
     &:hover {
       @media (hover: hover) {
@@ -948,6 +992,11 @@
       --tw-scale-y: 90%;
       --tw-scale-z: 90%;
       scale: var(--tw-scale-x) var(--tw-scale-y);
+    }
+  }
+  .active\:cursor-grabbing {
+    &:active {
+      cursor: grabbing;
     }
   }
   .active\:bg-violet-700 {
@@ -991,6 +1040,14 @@
   src: url("../../../public/assets/fonts/MaterialSymbolsRounded.woff2") format("woff2");
   font-display: block;
 }
+* {
+  user-select: none;
+  -webkit-user-select: none;
+}
+#search, input[type="text"] {
+  user-select: text;
+  -webkit-user-select: text;
+}
 .material-symbols-rounded {
   font-family: "Material Symbols Rounded";
   font-weight: normal;
@@ -1007,7 +1064,7 @@
   -webkit-font-smoothing: antialiased;
   font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 }
-button:focus, input:focus, button:focus-visible, input:focus-visible {
+button:focus, input:focus, a:focus, button:focus-visible, input:focus-visible, a:focus-visible {
   outline: none;
 }
 @media (orientation: portrait) {
@@ -1026,6 +1083,9 @@ button:focus, input:focus, button:focus-visible, input:focus-visible {
     margin: 0 2rem 2rem 2rem;
     border-radius: 0.75rem;
     border: 1px solid rgb(255 255 255 / 0.05);
+  }
+  #sidebar-footer-credit {
+    display: none !important;
   }
   #resize-handle {
     display: none;
