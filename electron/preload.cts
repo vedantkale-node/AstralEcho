@@ -1,5 +1,6 @@
 import { contextBridge } from "electron";
 import { ipcRenderer } from "electron";
+import { MediaFile } from "./types/media";
 
 contextBridge.exposeInMainWorld("api", {
   version: "1.0.0",
@@ -26,7 +27,7 @@ contextBridge.exposeInMainWorld("api", {
   saveFileOrder: (folder: string, order: string[]) =>
     ipcRenderer.invoke("save-file-order", folder, order),
   getThumbnailCache: () => ipcRenderer.invoke("get-thumbnail-cache"),
-  getAudioMetadata: (file: any) =>
+  getAudioMetadata: (file: MediaFile) =>
     ipcRenderer.invoke("get-audio-metadata", file),
   getLastPlayed: () => ipcRenderer.invoke("get-last-played"),
   saveLastPlayed: (filePath: string) =>

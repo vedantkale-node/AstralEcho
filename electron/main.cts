@@ -95,7 +95,19 @@ ipcMain.handle("get-thumbnail-cache", async () => {
   return readThumbnailCache();
 });
 
-async function readSettings(): Promise<Record<string, any>> {
+interface AppSettings {
+  lastFolder?: string | null;
+  lastPlayedPath?: string | null;
+  volume?: number;
+  shuffle?: boolean;
+  repeat?: "off" | "all" | "one";
+  sidebarWidth?: number;
+  windowBounds?: { x: number; y: number; width: number; height: number };
+  windowMaximized?: boolean;
+  fileOrders?: Record<string, string[]>;
+}
+
+async function readSettings(): Promise<AppSettings> {
   try {
     const content = await fs.readFile(settingsPath, "utf8");
     return JSON.parse(content);
@@ -104,7 +116,7 @@ async function readSettings(): Promise<Record<string, any>> {
   }
 }
 
-async function writeSettings(patch: Record<string, any>) {
+async function writeSettings(patch: Partial<AppSettings>) {
   await fs.mkdir(path.dirname(settingsPath), { recursive: true });
   const current = await readSettings();
   const updated = { ...current, ...patch };

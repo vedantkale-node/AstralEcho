@@ -1,10 +1,10 @@
-/// <reference path="./electron.d.ts" />
+import "./electron.d.ts";
 const app = document.getElementById("app");
 
 async function init() {
   if (app) {
     const lastFolder = await window.api.getLastFolder();
-    let thumbnailCache: Record<string, string> =
+    const thumbnailCache: Record<string, string> =
       await window.api.getThumbnailCache();
 
     app.innerHTML = `
@@ -605,7 +605,9 @@ async function init() {
             playbackRate: player.playbackRate,
             position: player.currentTime,
           });
-        } catch {}
+        } catch (err) {
+          console.debug("Ignored:", err);
+        }
       }
     });
 
@@ -1086,7 +1088,9 @@ async function init() {
               if (typeof parsed.duration === "number") {
                 file.duration = parsed.duration;
               }
-            } catch {}
+            } catch (err) {
+              console.debug("Ignoring corrupt cache entry:", err);
+            }
           }
         }
 
