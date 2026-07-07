@@ -1,6 +1,6 @@
 import { contextBridge } from "electron";
 import { ipcRenderer } from "electron";
-import { MediaFile } from "./types/media";
+import { MediaFile } from "./types/media.js";
 
 contextBridge.exposeInMainWorld("api", {
   version: "1.0.0",
