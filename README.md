@@ -1,6 +1,6 @@
 ﻿# 🌌 Astral Echo
 
-![Astral Echo Cover](https://i.postimg.cc/6pPs8qww/Astral-Echo.png)
+![Astral Echo Cover](./public/assets/docs/cover.png)
 
 <div style="text-align : center">
 
@@ -33,24 +33,25 @@ A fast, lightweight desktop media player built with Electron and TypeScript. Ast
 
 ## 🛠️ Tech Stack
 
-| Category          | Technology        |
-| ------------------|-------------------|
-| App shell         | Electron          |
-| Language          | TypeScript        |
-| Styling           | Tailwind CSS      |
-| Packaging         | electron-builder  |
-| Package manager   | pnpm              |
-
+| Category        | Technology       |
+| --------------- | ---------------- |
+| App shell       | Electron         |
+| Language        | TypeScript       |
+| Styling         | Tailwind CSS     |
+| Packaging       | electron-builder |
+| Package manager | pnpm             |
 
 ## ✨ Features
 
 **Playback**
+
 - Play/pause, next/previous, shuffle, three-mode repeat (off / all / one)
 - Seek, mute, volume control, fullscreen with auto-hiding controls and title overlay
 - Media Session integration, OS-level media keys (Windows/Linux) and lock-screen controls
 - On-screen volume, seek, and play/pause indicators
 
 **Library**
+
 - Recursive folder scanning for audio and video
 - Auto-generated, searchable media library
 - Drag-and-drop reordering, persisted per folder
@@ -58,11 +59,13 @@ A fast, lightweight desktop media player built with Electron and TypeScript. Ast
 - Embedded audio artwork, title, and duration
 
 **Persistence**
+
 - Last opened folder and last played file, restored on launch
 - Volume, shuffle, repeat mode, and sidebar width
 - Window size and position
 
 **UX**
+
 - Keyboard shortcuts for all common playback actions
 - Responsive portrait-mode layout for vertical monitors
 - Toast notifications for playback and folder-loading errors
@@ -73,12 +76,11 @@ A fast, lightweight desktop media player built with Electron and TypeScript. Ast
 The main process scans for the following file extensions:
 
 | Type  | Extensions                               |
-| ----- | ----------------------------------------- |
-| Audio | `.mp3`, `.wav`, `.flac`, `.m4a`, `.opus`  |
-| Video | `.mp4`, `.mkv`, `.webm`                   |
+| ----- | ---------------------------------------- |
+| Audio | `.mp3`, `.wav`, `.flac`, `.m4a`, `.opus` |
+| Video | `.mp4`, `.mkv`, `.webm`                  |
 
 Playback support depends on Electron/Chromium codec availability, so some indexed files may not be playable on every system.
-
 
 ## ✅ Prerequisites
 
@@ -149,47 +151,47 @@ pnpm format:check    # Check formatting without writing changes
 ```text
 .
 ├── electron/
-│   ├── main.cts            
-│   ├── preload.cts         
-│   ├── dev-runner.cjs      
+│   ├── main.cts
+│   ├── preload.cts
+│   ├── dev-runner.cjs
 │   ├── ipc/
-│   │   ├── settings.cts    
-│   │   ├── thumbnails.cts  
-│   │   ├── media.cts       
-│   │   └── system.cts      
+│   │   ├── settings.cts
+│   │   ├── thumbnails.cts
+│   │   ├── media.cts
+│   │   └── system.cts
 │   └── types/
-│       └── media.ts        
+│       └── media.ts
 ├── public/
 │   └── assets/
-│       ├── fonts/           
-│       └── ...              
+│       ├── fonts/
+│       └── ...
 ├── src/
 │   └── renderer/
-│       ├── app.ts           
+│       ├── app.ts
 │       ├── modules/
-│       │   ├── state.ts     
-│       │   ├── toast.ts     
-│       │   ├── template.ts  
-│       │   ├── player.ts    
-│       │   ├── library.ts   
-│       │   └── controls.ts  
-│       ├── electron.d.ts    
-│       ├── index.html       
-│       └── css/             
-├── dist/                    
-├── release/                 
+│       │   ├── state.ts
+│       │   ├── toast.ts
+│       │   ├── template.ts
+│       │   ├── player.ts
+│       │   ├── library.ts
+│       │   └── controls.ts
+│       ├── electron.d.ts
+│       ├── index.html
+│       └── css/
+├── dist/
+├── release/
 ├── package.json
-└── todo.md                  
+└── todo.md
 ```
 
 ## 💾 App Data
 
 Settings and caches are stored in Electron's standard per-OS application data directory, under `astral-echo/`:
 
-| OS      | Location                                          |
-| ------- | -------------------------------------------------- |
-| Windows | `%APPDATA%\astral-echo\`                              |
-| Linux   | `~/.config/astral-echo/`                                    |
+| OS      | Location                 |
+| ------- | ------------------------ |
+| Windows | `%APPDATA%\astral-echo\` |
+| Linux   | `~/.config/astral-echo/` |
 
 Two files live there:
 
@@ -199,7 +201,7 @@ Two files live there:
 ## ⌨️ Keyboard Shortcuts
 
 | Shortcut | Action                              |
-| -------- | ------------------------------------|
+| -------- | ----------------------------------- |
 | `Space`  | Play / pause                        |
 | `←`      | Seek backward 5s                    |
 | `→`      | Seek forward 5s                     |
@@ -213,7 +215,6 @@ Two files live there:
 | `R`      | Cycle repeat mode (off → all → one) |
 | `Escape` | Exit fullscreen                     |
 
-
 ## 📄 License
 
 MIT © 2026 Vedant Kale
@@ -223,13 +224,16 @@ MIT © 2026 Vedant Kale
 <div style="text-align : center">
 
 ### Home
-![Home](https://i.postimg.cc/PrDRryJ1/Astra-Echo-(3).png)
 
-### Fullscreen 
-![Fullscreen](https://i.postimg.cc/pXj6XCrJ/Astra-Echo-(2).png)
+![Home](./public/assets/docs/main.png)
+
+### Fullscreen
+
+![Fullscreen](./public/assets/docs/fullscreen.png)
 
 ### Responsive Layout
-![Home-Vertical](https://i.postimg.cc/9F9nFb0Z/Astra-Echo-(1).png)
+
+![Home-Vertical](./public/assets/docs/responsive.png)
 
 </div>
 
