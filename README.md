@@ -1,47 +1,89 @@
 ﻿# 🌌 Astral Echo
 
-A desktop media player built with Electron and TypeScript. Astral Echo scans a local folder for audio and video files, builds a searchable library, and plays media through a focused, minimal player interface.
+![Astral Echo Cover](https://i.postimg.cc/6pPs8qww/Astral-Echo.png)
 
-> **Status:** Active development. Packaging and production builds are not yet finalized — see [Known Limitations & Roadmap](#-known-limitations--roadmap).
+<div style="text-align : center">
 
-<!-- TODO: Add a screenshot or short GIF of the player UI here. This is the highest-impact missing piece for a media player project. -->
+![Electron](https://img.shields.io/badge/Electron-47848F?style=flat-square&logo=electron&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+![Windows](https://img.shields.io/badge/Windows-0078D6?style=flat-square&logo=windows&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat-square&logo=linux&logoColor=black)
+
+</div>
+
+A fast, lightweight desktop media player built with Electron and TypeScript. Astral Echo scans a local folder for audio and video files, builds a searchable library, and plays media through a focused, minimal player interface with persistent state, drag-and-drop reordering, and full keyboard control.
+
+## 📑 Table of Contents
+
+- [Tech Stack](#-tech-stack)
+- [Features](#-features)
+- [Supported Media](#-supported-media)
+- [Prerequisites](#-prerequisites)
+- [Getting Started](#-getting-started)
+- [Build & Package](#-build--package)
+- [Quality Checks](#-quality-checks)
+- [Project Structure](#-project-structure)
+- [App Data](#-app-data)
+- [Keyboard Shortcuts](#-keyboard-shortcuts)
+- [License](#-license)
+- [Screenshots](#-screenshots)
+- [Author](#-author)
+
+## 🛠️ Tech Stack
+
+| Category          | Technology        |
+| ------------------|-------------------|
+| App shell         | Electron          |
+| Language          | TypeScript        |
+| Styling           | Tailwind CSS      |
+| Packaging         | electron-builder  |
+| Package manager   | pnpm              |
+
 
 ## ✨ Features
 
-- Pick a local folder and recursively scan it for audio/video media
-- Auto-generated, searchable media library (search by cleaned file name)
-- Video thumbnail generation in the renderer
-- Embedded audio artwork extraction (via `music-metadata`)
-- Persistent state: last opened folder, last played file, and volume
-- Full playback controls — play/pause, next/previous, shuffle, repeat, mute, volume, seek, fullscreen
-- Keyboard shortcuts for common playback actions
-- Resizable library sidebar
+**Playback**
+- Play/pause, next/previous, shuffle, three-mode repeat (off / all / one)
+- Seek, mute, volume control, fullscreen with auto-hiding controls and title overlay
+- Media Session integration, OS-level media keys (Windows/Linux) and lock-screen controls
+- On-screen volume, seek, and play/pause indicators
+
+**Library**
+- Recursive folder scanning for audio and video
+- Auto-generated, searchable media library
+- Drag-and-drop reordering, persisted per folder
+- Video thumbnail generation, throttled and cached to disk
+- Embedded audio artwork, title, and duration
+
+**Persistence**
+- Last opened folder and last played file, restored on launch
+- Volume, shuffle, repeat mode, and sidebar width
+- Window size and position
+
+**UX**
+- Keyboard shortcuts for all common playback actions
+- Responsive portrait-mode layout for vertical monitors
+- Toast notifications for playback and folder-loading errors
+- Locally bundled icon font - fully offline, no external requests
 
 ## 🎞️ Supported Media
 
 The main process scans for the following file extensions:
 
 | Type  | Extensions                               |
-| ----- | ---------------------------------------- |
-| Audio | `.mp3`, `.wav`, `.flac`, `.m4a`, `.opus` |
-| Video | `.mp4`, `.mkv`, `.webm`                  |
+| ----- | ----------------------------------------- |
+| Audio | `.mp3`, `.wav`, `.flac`, `.m4a`, `.opus`  |
+| Video | `.mp4`, `.mkv`, `.webm`                   |
 
-This list controls what the scanner _indexes_ — actual playback support depends on the Electron/Chromium codec support available on the host system, so a scanned file isn't guaranteed to play on every machine.
+Playback support depends on Electron/Chromium codec availability, so some indexed files may not be playable on every system.
 
-## 🛠️ Tech Stack
-
-| Category        | Technology       |
-| --------------- | ---------------- |
-| App shell       | Electron         |
-| Language        | TypeScript       |
-| Styling         | Tailwind CSS     |
-| Metadata        | `music-metadata` |
-| Package manager | pnpm             |
 
 ## ✅ Prerequisites
 
-- Node.js <!-- TODO: specify minimum version, e.g. 18+ -->
-- pnpm <!-- TODO: specify minimum version -->
+- Node.js 18 or later
+- pnpm 9 or later
 
 ## 🚀 Getting Started
 
@@ -51,7 +93,7 @@ Install dependencies:
 pnpm install
 ```
 
-Start the app in development mode (runs Electron with TypeScript watchers):
+Start the app in development mode (runs Electron with TypeScript and CSS watchers):
 
 ```bash
 pnpm dev
@@ -59,33 +101,46 @@ pnpm dev
 
 This runs the following concurrently:
 
-- `pnpm watch:main` — recompiles the Electron main process on change
-- `pnpm watch:renderer` — recompiles the renderer on change
-- `pnpm electron` — launches the Electron app
+- `pnpm watch:main` - recompiles the Electron main process on change
+- `pnpm watch:renderer` - recompiles the renderer on change
+- `pnpm electron` - launches the Electron app, restarting on rebuild
+- `pnpm build:css:watch` - recompiles Tailwind CSS on change
 
-If you're editing Tailwind styles, run the CSS watcher in a separate terminal:
+## 🏗️ Build & Package
 
-```bash
-pnpm build:css
-```
-
-## 🏗️ Build
-
-Compile the main process and renderer for production:
+Compile TypeScript and CSS for production:
 
 ```bash
 pnpm build
 ```
 
-Compiled output is written to `dist/`.
+Run the compiled app directly, without packaging:
 
-<!-- TODO: Document how to actually launch the compiled app from dist/, or note explicitly that packaging (electron-builder) isn't wired up yet and this step is currently source-only. -->
+```bash
+pnpm start
+```
+
+Build a distributable installer for your platform:
+
+```bash
+pnpm dist:win     # Windows: NSIS installer + portable exe
+pnpm dist:linux   # Linux: AppImage + .deb
+```
+
+Or build an unpacked app directory (fast, useful for testing electron-builder output without generating a full installer):
+
+```bash
+pnpm pack
+```
+
+All packaged output is written to `release/`.
 
 ## 🔍 Quality Checks
 
 ```bash
 pnpm lint            # Run ESLint
-pnpm format          # Format files
+pnpm lint:fix        # Run ESLint and auto-fix
+pnpm format          # Format files with Prettier
 pnpm format:check    # Check formatting without writing changes
 ```
 
@@ -94,68 +149,90 @@ pnpm format:check    # Check formatting without writing changes
 ```text
 .
 ├── electron/
-│   ├── main.cts          # Electron main process — folder scanning, settings, IPC
-│   ├── preload.cts       # Renderer-safe API exposed via contextBridge
-│   ├── dev-runner.cjs    # Launches Electron during development
-│   └── storage/          # Local development settings JSON
+│   ├── main.cts            
+│   ├── preload.cts         
+│   ├── dev-runner.cjs      
+│   ├── ipc/
+│   │   ├── settings.cts    
+│   │   ├── thumbnails.cts  
+│   │   ├── media.cts       
+│   │   └── system.cts      
+│   └── types/
+│       └── media.ts        
 ├── public/
-│   └── assets/           # App icon and placeholder artwork
+│   └── assets/
+│       ├── fonts/           
+│       └── ...              
 ├── src/
 │   └── renderer/
-│       ├── app.ts        # Renderer UI and playback logic
-│       ├── electron.d.ts # Window API typings
-│       ├── index.html    # Renderer entry HTML
-│       └── css/          # Tailwind input/output CSS
-├── dist/                 # Compiled output
+│       ├── app.ts           
+│       ├── modules/
+│       │   ├── state.ts     
+│       │   ├── toast.ts     
+│       │   ├── template.ts  
+│       │   ├── player.ts    
+│       │   ├── library.ts   
+│       │   └── controls.ts  
+│       ├── electron.d.ts    
+│       ├── index.html       
+│       └── css/             
+├── dist/                    
+├── release/                 
 ├── package.json
-└── todo.md               # Project backlog
+└── todo.md                  
 ```
 
 ## 💾 App Data
 
-During development, settings are stored locally at:
+Settings and caches are stored in Electron's standard per-OS application data directory, under `astral-echo/`:
 
-```text
-electron/storage/settings.json
-```
+| OS      | Location                                          |
+| ------- | -------------------------------------------------- |
+| Windows | `%APPDATA%\astral-echo\`                              |
+| Linux   | `~/.config/astral-echo/`                                    |
 
-Currently persisted:
+Two files live there:
 
-- Last opened folder
-- Last played file path
-- Volume
-
-> Planned: migrate this to Electron's `app.getPath("userData")` for proper production-style app data handling (tracked in [todo.md](./todo.md)).
+- **`settings.json`** - last opened folder, last played file, volume, shuffle, repeat mode, sidebar width, window size/position, per-folder custom file order
+- **`thumbnails.json`** - cached video thumbnails and durations, so they don't regenerate on every launch
 
 ## ⌨️ Keyboard Shortcuts
 
-| Shortcut | Action            |
-| -------- | ----------------- |
-| `Space`  | Play / pause      |
-| `←`      | Seek backward 5s  |
-| `→`      | Seek forward 5s   |
-| `↑`      | Increase volume   |
-| `↓`      | Decrease volume   |
-| `M`      | Mute / unmute     |
-| `F`      | Toggle fullscreen |
-| `N`      | Next item         |
-| `P`      | Previous item     |
-| `S`      | Toggle shuffle    |
-| `R`      | Toggle repeat     |
-| `Escape` | Exit fullscreen   |
+| Shortcut | Action                              |
+| -------- | ------------------------------------|
+| `Space`  | Play / pause                        |
+| `←`      | Seek backward 5s                    |
+| `→`      | Seek forward 5s                     |
+| `↑`      | Increase volume 5%                  |
+| `↓`      | Decrease volume 5%                  |
+| `M`      | Mute / unmute                       |
+| `F`      | Toggle fullscreen                   |
+| `N`      | Next item                           |
+| `P`      | Previous item                       |
+| `S`      | Toggle shuffle                      |
+| `R`      | Cycle repeat mode (off → all → one) |
+| `Escape` | Exit fullscreen                     |
 
-Shortcuts are disabled while the search input is focused.
 
-## ⚠️ Known Limitations & Roadmap
+## 📄 License
 
-Astral Echo is functional but not yet production-polished:
+MIT © 2026 Vedant Kale
 
-- **Packaging** — `electron-builder` is installed but not fully configured; there's no distributable build yet.
-- **CSS pipeline** — `build:css` is currently watch-only; there's no dedicated one-shot production CSS build script.
-- **Renderer architecture** — UI and playback logic currently live in a single `app.ts` file; component-level decomposition is planned.
-- **Scanning at scale** — folder scanning and thumbnail generation are straightforward implementations without caching or cancellation, and may not scale well to very large libraries.
+## 📸 Screenshots
 
-Full backlog — including playback polish, metadata caching, Electron security hardening, packaging, and tests — is tracked in [`todo.md`](./todo.md).
+<div style="text-align : center">
 
-<!-- TODO: Add a License section once one is chosen. -->
-<!-- TODO: Add a Contributing section if external contributions are welcome (even a one-liner pointing to todo.md + PR process). -->
+### Home
+![Home](https://i.postimg.cc/PrDRryJ1/Astra-Echo-(3).png)
+
+### Fullscreen 
+![Fullscreen](https://i.postimg.cc/pXj6XCrJ/Astra-Echo-(2).png)
+
+### Responsive Layout
+![Home-Vertical](https://i.postimg.cc/9F9nFb0Z/Astra-Echo-(1).png)
+
+</div>
+
+## 👤 Author
+
+Made with Electron & TypeScript by <a target="blank" href="http://vedantkale.in"> Vedant Kale.</a>
